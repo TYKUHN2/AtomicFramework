@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>AtomicFramework</AssemblyName>
+    <Product />
+    <Version>0.1.0</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <RestoreAdditionalProjectSources>
+      https://api.nuget.org/v3/index.json;
+      https://nuget.bepinex.dev/v3/index.json
+    </RestoreAdditionalProjectSources>
+    <RootNamespace>AtomicFramework</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <Authors>Tyler Kuhn</Authors>
+    <Company />
+    <Description>Adds VoIP to Nuclear Option</Description>
+    <Copyright>All Rights Reserved 2025</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Configurations>Debug-Bep6;Release-Bep6;Debug-Bep5;Release-Bep5</Configurations>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <NoWarn>1701;1702;8500;BepInEx002</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
+    <DefineConstants>BEP6;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
+    <DefineConstants>BEP5;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Debug-Bep6'">
+    <DebugType>portable</DebugType>
+    <DefineConstants>DEBUG;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+	  <PackageReference Include="UnityEngine.Modules" Version="2022.3.6" IncludeAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
+    <PackageReference Include="BepInEx.Unity.Mono" Version="6.0.0-be.732" IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\com.rlabrecque.steamworks.net.dll</HintPath>
+    </Reference>
+    <Reference Include="Mirage">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Mirage.dll</HintPath>
+    </Reference>
+    <Reference Include="Mirage.SocketLayer">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Mirage.SocketLayer.dll</HintPath>
+    </Reference>
+    <Reference Include="Mirage.SteamworksSocket">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Mirage.SteamworksSocket.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Rewired_Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Mathematics">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\Unity.Mathematics.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>D:\SteamLibrary\steamapps\common\Nuclear Option\NuclearOption_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
