@@ -73,19 +73,19 @@ namespace AtomicFramework
                             {
                                 if (plugin.Instance is Mod mod)
                                 {
-                                    Mod.MultiplayerOptions options = mod.multiplayerOptions;
+                                    Mod.Options.Multiplayer options = mod.options.multiplayerOptions;
 
                                     if (NetworkManagerNuclearOption.i.Server.Active) // We are host
                                     {
-                                        if (options == Mod.MultiplayerOptions.REQUIRES_ALL)
+                                        if (options == Mod.Options.Multiplayer.REQUIRES_ALL)
                                             required.Add(plugin.Metadata.GUID);
                                     }
                                     else // We are client
                                     {
                                         IEndPoint peer = NetworkManagerNuclearOption.i.Client.Player.Address;
 
-                                        if (options == Mod.MultiplayerOptions.REQUIRES_ALL ||
-                                            (options == Mod.MultiplayerOptions.REQUIRES_HOST && 
+                                        if (options == Mod.Options.Multiplayer.REQUIRES_ALL ||
+                                            (options == Mod.Options.Multiplayer.REQUIRES_HOST && 
                                             peer is SteamEndPoint steamPeer && 
                                             steamPeer.Connection.SteamID.m_SteamID == message.player))
                                             required.Add(plugin.Metadata.GUID);

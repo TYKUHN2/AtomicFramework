@@ -37,6 +37,7 @@ namespace AtomicFramework
             channel.OnMessage += Handler;
 
             LoadingManager.MissionLoaded += MissionLoaded;
+            LoadingManager.MissionUnloaded += MissionUnloaded;
         }
 
         public string[] GetMods(ulong player)
@@ -143,7 +144,16 @@ namespace AtomicFramework
                 pending = players.Length;
 
                 foreach (Player player in players)
-                    channel.Connect(player);
+                    channel.Connect(player.SteamID);
+            }
+        }
+
+        private void MissionUnloaded()
+        {
+            foreach (ulong player in knownPlayers.Keys.ToArray())
+            {
+                channel.Disconnect(player);
+                knownPlayers.Remove(player);
             }
         }
 

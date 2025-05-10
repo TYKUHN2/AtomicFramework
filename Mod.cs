@@ -6,26 +6,38 @@ namespace AtomicFramework
     [BepInDependency("AtomicFramework", BepInDependency.DependencyFlags.HardDependency)]
     public abstract class Mod: BaseUnityPlugin
     {
-        public enum MultiplayerOptions
+        public struct Options()
         {
-            CLIENT_ONLY,
-            SERVER_ONLY,
-            REQUIRES_HOST,
-            REQUIRES_ALL
+            public enum Runtime
+            {
+                NONE,
+                TOGGLEABLE,
+                RELOADABLE
+            }
+
+            public enum Multiplayer
+            {
+                CLIENT_ONLY,
+                SERVER_ONLY,
+                REQUIRES_HOST,
+                REQUIRES_ALL
+            }
+
+            public string repository = string.Empty;
+            public Multiplayer multiplayerOptions = Multiplayer.REQUIRES_HOST;
+            public Runtime runtimeOptions = Runtime.NONE;
         }
 
         protected internal NetworkAPI? Networking;
 
-        internal readonly MultiplayerOptions multiplayerOptions;
-        internal readonly bool toggleable;
+        internal readonly Options options;
 
-        protected Mod(MultiplayerOptions multiplayer = MultiplayerOptions.REQUIRES_HOST, bool toggleable = false)
+        protected Mod(Options options)
         {
             if (NetworkingManager.instance != null)
                 Networking = new(Info.Metadata.GUID);
 
-            multiplayerOptions = multiplayer;
-            this.toggleable = toggleable;
+            this.options = options;
         }
     }
 }

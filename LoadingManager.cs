@@ -132,7 +132,7 @@ namespace AtomicFramework
                     NetworkingManager.instance!.discovery.ModsAvailable -= Subscriber;
 
                     string[] enabled = Plugin.Instance.PluginsEnabled()
-                        .Where(plugin => plugin.Instance is not Mod mod || mod.multiplayerOptions == Mod.MultiplayerOptions.REQUIRES_ALL)
+                        .Where(plugin => plugin.Instance is not Mod mod || mod.options.multiplayerOptions == Mod.MultiplayerOptions.REQUIRES_ALL)
                         .Select(plugin => plugin.Metadata.GUID)
                         .ToArray();
 
