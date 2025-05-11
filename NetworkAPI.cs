@@ -3,6 +3,7 @@ using System.Threading;
 
 namespace AtomicFramework
 {
+    /// <summary>Safe cooperative networking features.</summary>
     public class NetworkAPI
     {
         internal Dictionary<ushort, NetworkChannel> channels = [];
@@ -15,6 +16,14 @@ namespace AtomicFramework
             this.GUID = GUID;
         }
 
+        /// <summary>
+        /// Opens a new virtual channel.
+        /// </summary>
+        /// <remarks>
+        /// Returns existing channel if already opened.
+        /// </remarks>
+        /// <param name="channel">ID of virtual channel</param>
+        /// <returns>Virtual channel of ID</returns>
         public NetworkChannel OpenChannel(ushort channel)
         {
             if (channels.ContainsKey(channel))
@@ -29,6 +38,10 @@ namespace AtomicFramework
             return chan;
         }
 
+        /// <summary>
+        /// Closes a virtual channel.
+        /// </summary>
+        /// <param name="channel">ID of virtual channel</param>
         public void CloseChannel(ushort channel)
         {
             listenLock.Wait();

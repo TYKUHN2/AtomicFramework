@@ -9,12 +9,27 @@ using System.Threading;
 
 namespace AtomicFramework
 {
+    /// <summary>
+    /// Provides access to common gameplay events.
+    /// </summary>
     public static class LoadingManager
     {
+        /// <summary>
+        /// Allows delegates to cancel an event.
+        /// </summary>
+        /// <remarks>
+        /// Due to how C# works, all delegates are always called regardless of when the event is canceled.
+        /// </remarks>
         public class Cancelable
         {
             private bool _canceled;
 
+            /// <summary>
+            /// If the event has been canceled.
+            /// </summary>
+            /// <remarks>
+            /// Cannot be set to false.
+            /// </remarks>
             public bool Canceled
             {
                 get
@@ -30,15 +45,48 @@ namespace AtomicFramework
 
         private static readonly Harmony harmony = new("xyz.tyknet.NuclearOption");
 
+        /// <summary>
+        /// When the game has finished loading.
+        /// </summary>
         public static event Action? GameLoaded;
+
+        /// <summary>
+        /// When the game's Network Manager (<code>NetworkManagerNuclearOption</code>) has been
+        /// initialized.
+        /// </summary>
         public static event Action? NetworkReady;
 
+        /// <summary>
+        /// When a mission has been fully loaded.
+        /// </summary>
+        /// <remarks>
+        /// Mirage at this point reports that the scene has been loaded, and most or all network
+        /// objects created.
+        /// That being said, there is no guarentee the game follows what Mirage says.
+        /// </remarks>
         public static event Action? MissionLoaded;
+
+        /// <summary>
+        /// When a mission is being unloaded.
+        /// </summary>
         public static event Action? MissionUnloaded;
 
+        /// <summary>
+        /// When we are a host and a given player joined.
+        /// </summary>
         public static event Action<ulong>? PlayerJoined;
+
+        /// <summary>
+        /// When we are a host and a given player left.
+        /// </summary>
         public static event Action<ulong>? PlayerLeft;
 
+        /// <summary>
+        /// When a given player is attempting to join, allowing mods filter out users.
+        /// </summary>
+        /// <remarks>
+        /// Does not trigger the kick system, so the player can immediately rejoin.
+        /// </remarks>
         public static event Action<ulong, Cancelable>? PlayerAuthenticating;
 
         static LoadingManager()

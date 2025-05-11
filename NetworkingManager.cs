@@ -8,7 +8,10 @@ using System.Threading;
 
 namespace AtomicFramework
 {
-    internal class NetworkingManager: MonoBehaviour
+    /// <summary>
+    /// Provides networking capabilities.
+    /// </summary>
+    public class NetworkingManager: MonoBehaviour
     {
         internal static NetworkingManager? instance;
 
@@ -23,6 +26,9 @@ namespace AtomicFramework
 
         private readonly HSteamNetPollGroup poll = SteamNetworkingSockets.CreatePollGroup();
 
+        /// <summary>
+        /// Access to the <see cref="Discovery">Discovery</see> instance.
+        /// </summary>
         public readonly Discovery discovery;
 
 #pragma warning disable CS8618
@@ -80,6 +86,11 @@ namespace AtomicFramework
             };
         }
 
+        /// <summary>
+        /// Utility funtion to convert player SteamID to Player object.
+        /// </summary>
+        /// <param name="steamid">SteamID to convert.</param>
+        /// <returns>Game Player object.</returns>
         public Player? GetPlayer(ulong steamid)
         {
             return UnitRegistry.playerLookup.Values.FirstOrDefault(player => player.SteamID == steamid);

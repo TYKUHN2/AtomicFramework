@@ -6,22 +6,53 @@ using System.Linq;
 
 namespace AtomicFramework
 {
+    /// <summary>
+    /// Virtual network channel
+    /// </summary>
     public class NetworkChannel
     {
         internal readonly HSteamListenSocket socket;
 
         private readonly Dictionary<ulong, HSteamNetConnection> connections = [];
 
+        /// <summary>
+        /// Fired when a message is received on the channel.
+        /// </summary>
         public event Action<NetworkMessage>? OnMessage;
+
+        /// <summary>
+        /// Fired when a player connects to this channel.
+        /// </summary>
         public event Action<ulong>? OnConnected;
+
+        /// <summary>
+        /// Fired when a player disconnects from this channel.
+        /// </summary>
         public event Action<ulong>? OnDisconnect;
+
+        /// <summary>
+        /// Fired when this channel fails to connect to a player.
+        /// </summary>
         public event Action<ulong, bool>? OnConnectionFailed;
 
+        /// <summary>
+        /// Delegate type for inbound connection filters.
+        /// </summary>
+        /// <param name="player">SteamID of player trying to connect.</param>
+        /// <returns>Whether to accept the connection.</returns>
         public delegate bool ConnectionFilter(ulong player);
+
+        /// <summary>
+        /// Called when this channel receives a new connection.
+        /// </summary>
         public ConnectionFilter? OnConnection;
 
         private readonly string GUID;
-        private readonly ushort channel;
+
+        /// <summary>
+        /// ID of this virtual channel.
+        /// </summary>
+        public readonly ushort channel;
 
         internal NetworkChannel(HSteamListenSocket socket, string GUID, ushort channel)
         {
@@ -30,6 +61,12 @@ namespace AtomicFramework
             this.channel = channel;
         }
 
+        /// <summary>
+        /// Send data on this channel to a given player.
+        /// </summary>
+        /// <param name="player">SteamID of player to send to.</param>
+        /// <param name="message">Data to send.</param>
+        /// <exception cref="IOException">Player is not connected.</exception>
         public void Send(ulong player, byte[] message)
         {
             if (connections.TryGetValue(player, out HSteamNetConnection conn))
@@ -46,6 +83,10 @@ namespace AtomicFramework
                 throw new IOException();
         }
 
+        /// <summary>
+        /// Connect to a given player on this channel.
+        /// </summary>
+        /// <param name="address">SteamID of player to connect to.</param>
         public void Connect(ulong address)
         {
             if (connections.ContainsKey(address))
@@ -62,6 +103,10 @@ namespace AtomicFramework
             NetworkingManager.instance!.discovery.GetPort(address, GUID, channel, OnPort);
         }
 
+        /// <summary>
+        /// Disconnect a given player from this channel.
+        /// </summary>
+        /// <param name="player">SteamID of player to connect to.</param>
         public void Disconnect(ulong player)
         {
             if (connections.TryGetValue(player, out HSteamNetConnection conn))

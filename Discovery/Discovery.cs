@@ -7,6 +7,9 @@ using System.Threading;
 
 namespace AtomicFramework
 {
+    /// <summary>
+    /// Provides access to discovering the mods of other players.
+    /// </summary>
     public class Discovery
     {
         private static readonly byte[] Handshake = [0x01, 0x00, 0x00, 0x00]; // Our maximum discovery version (little endian): 1.0
@@ -17,6 +20,9 @@ namespace AtomicFramework
 
         private readonly Dictionary<ulong, IDiscoveryHandler?> knownPlayers = [];
 
+        /// <summary>
+        /// Array of al players currently connected via the Discovery mechanism.
+        /// </summary>
         public ulong[] Players
         {
             get
@@ -25,7 +31,17 @@ namespace AtomicFramework
             }
         }
 
+        /// <summary>
+        /// Fired when all pending connections to other players are connected or failed.
+        /// </summary>
+        /// <remarks>
+        /// Fires repeatedly throughout mission.
+        /// </remarks>
         public event Action? Ready;
+
+        /// <summary>
+        /// Fires when the given player has send its mod list.
+        /// </summary>
         public event Action<ulong>? ModsAvailable;
 
         internal Discovery()
@@ -40,6 +56,15 @@ namespace AtomicFramework
             LoadingManager.MissionUnloaded += MissionUnloaded;
         }
 
+        /// <summary>
+        /// Gets the list of known mods of a player.
+        /// </summary>
+        /// <remarks>
+        /// If the mods are not known, returns and empty array.
+        /// Otherwise, always contains at least AtomicFramework.
+        /// </remarks>
+        /// <param name="player">Player to get mods of.</param>
+        /// <returns>List of known mods.</returns>
         public string[] GetMods(ulong player)
         {
             return knownPlayers.GetValueOrDefault(player)?.Mods ?? [];

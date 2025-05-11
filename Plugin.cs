@@ -14,12 +14,15 @@ using BepInEx.Unity.Mono.Bootstrap;
 
 namespace AtomicFramework
 {
+    /// <summary>
+    /// BepInEx plugin of AtomicFramework.
+    /// </summary>
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     [BepInProcess("NuclearOption.exe")]
-    public class Plugin : BaseUnityPlugin
+    internal class Plugin : BaseUnityPlugin
     {
         private static Plugin? _Instance;
-        public static Plugin Instance
+        internal static Plugin Instance
         {
             get
             {
