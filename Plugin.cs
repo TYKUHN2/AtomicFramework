@@ -4,6 +4,8 @@ using System.Threading;
 using BepInEx.Logging;
 using UnityEngine;
 using System.Linq;
+using AtomicFramework.UI;
+
 
 #if BEP5
 using BepInEx.Bootstrap;
@@ -77,11 +79,13 @@ namespace AtomicFramework
 
             Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
             Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
+
+            ModButton.Init();
         }
 
         internal PluginInfo[] PluginsEnabled()
         {
-            return PluginsLoaded().Where(info => info.Instance.enabled).ToArray();
+            return PluginsLoaded().Where(info => ((MonoBehaviour)info.Instance).enabled).ToArray();
         }
 
         internal PluginInfo[] PluginsLoaded()
