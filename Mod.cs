@@ -1,5 +1,10 @@
 ﻿using BepInEx;
 
+#if BEP6
+using BepInEx.Unity.Mono;
+#endif
+
+
 namespace AtomicFramework
 {
 

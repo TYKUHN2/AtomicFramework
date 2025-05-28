@@ -103,7 +103,8 @@ namespace AtomicFramework
                 netManager.GetMethod("OnServerAuthenticated", BindingFlags.NonPublic | BindingFlags.Instance),
                 HookMethod(ClientAuthenticatingCallback)
             );
-            harmony.Patch(
+
+            harmony.Patch( // Maybe todo: replace with a direct listener on NetworkServer
                 netManager.GetMethod("OnServerDisconnect", BindingFlags.NonPublic | BindingFlags.Instance),
                 null,
                 HookMethod(ServerDisconnectCallback)
@@ -180,7 +181,7 @@ namespace AtomicFramework
                     NetworkingManager.instance!.discovery.ModsAvailable -= Subscriber;
 
                     string[] enabled = Plugin.Instance.PluginsEnabled()
-                        .Where(plugin => plugin.Instance is not Mod mod || mod.options.multiplayerOptions == Mod.MultiplayerOptions.REQUIRES_ALL)
+                        .Where(plugin => plugin.Instance is not Mod mod || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_ALL)
                         .Select(plugin => plugin.Metadata.GUID)
                         .ToArray();
 
@@ -222,9 +223,9 @@ namespace AtomicFramework
             return false;
         }
 
-        private static void ServerDisconnectCallback(INetworkPlayer player)
+        private static void ServerDisconnectCallback(INetworkPlayer conn)
         {
-            ulong id = (player.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
+            ulong id = (conn.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
             PlayerLeft?.Invoke(id);
         }
 
