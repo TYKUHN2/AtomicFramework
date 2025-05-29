@@ -82,6 +82,15 @@ namespace AtomicFramework
         public static event Action<ulong>? PlayerLeft;
 
         /// <summary>
+        /// When a player is attempting to join, before any framework networking begun.
+        /// </summary>
+        /// <remarks>
+        /// Avoid using the networking API as functionality is not guaranteed at this point.
+        /// </remarks>
+        /// <seealso cref="PlayerAuthenticating"/>
+        public static event Action<ulong, Cancelable>? PrePlayerAuthenticating;
+
+        /// <summary>
         /// When a given player is attempting to join, allowing mods filter out users.
         /// </summary>
         /// <remarks>
@@ -170,6 +179,15 @@ namespace AtomicFramework
             {
                 Plugin.Logger.LogWarning("Non-Steam player detected. Cannot validate.");
                 return true;
+            }
+
+            Cancelable cancelable = new();
+            PrePlayerAuthenticating?.Invoke(endpoint.Connection.SteamID.m_SteamID, cancelable);
+            if (cancelable.Canceled)
+            {
+                player.Disconnect();
+                NetworkingManager.instance!.Kill(endpoint.Connection.SteamID.m_SteamID);
+                return false;
             }
 
             int checkpoint = 0;

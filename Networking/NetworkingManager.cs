@@ -5,6 +5,7 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
+using NuclearOption.Networking;
 
 namespace AtomicFramework
 {
@@ -25,6 +26,8 @@ namespace AtomicFramework
         private readonly Callback<SteamNetConnectionStatusChangedCallback_t> statusChanged;
 
         private readonly HSteamNetPollGroup poll = SteamNetworkingSockets.CreatePollGroup();
+
+        private int lastFrame = Time.frameCount;
 
         /// <summary>
         /// Access to the <see cref="Discovery">Discovery</see> instance.
@@ -103,6 +106,11 @@ namespace AtomicFramework
 
         private void FixedUpdate()
         {
+            if (Time.frameCount == lastFrame)
+                return;
+
+            lastFrame = Time.frameCount;
+
             IntPtr[] ptrs = new IntPtr[64];
 
             while (true)
@@ -174,7 +182,9 @@ namespace AtomicFramework
         {
             NetworkChannel channel = sockets[listen];
 
-            if (channel.ReceiveConnection(remote.GetSteamID64(), conn))
+            if (GameManager.gameState == GameManager.GameState.Multiplayer &&
+                (NetworkManagerNuclearOption.i.Server.Active || GetPlayer(remote.GetSteamID64()) != null) &&
+                channel.ReceiveConnection(remote.GetSteamID64(), conn))
             {
                 SteamNetworkingSockets.AcceptConnection(conn);
                 connections[conn] = channel;

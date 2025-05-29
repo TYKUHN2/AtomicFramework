@@ -116,6 +116,26 @@ namespace AtomicFramework
             }
         }
 
+        /// <summary>
+        /// Retrieves the current statistics for the connection to the given player.
+        /// </summary>
+        /// <param name="player">Player to get statistics.</param>
+        /// <returns>Connection statistics</returns>
+        /// <remarks>
+        /// Different channels may return different results for the same player.
+        /// </remarks>
+        public NetworkStatistics GetStatistics(ulong player)
+        {
+            if (!connections.TryGetValue(player, out HSteamNetConnection conn))
+                return default;
+
+            SteamNetConnectionRealTimeStatus_t status = default;
+            SteamNetConnectionRealTimeLaneStatus_t drop = default;
+            SteamNetworkingSockets.GetConnectionRealTimeStatus(conn, ref status, 0, ref drop);
+
+            return new(status);
+        }
+
         internal void ReceiveMessage(NetworkMessage message)
         {
             OnMessage?.Invoke(message);
