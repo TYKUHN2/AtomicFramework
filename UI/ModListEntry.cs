@@ -1,5 +1,4 @@
 ﻿using BepInEx;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,46 +6,37 @@ namespace AtomicFramework.UI
 {
     internal class ModListEntry: MonoBehaviour
     {
-        private static readonly Font font = Resources.FindObjectsOfTypeAll<Font>().First(font => font.name == "LiberationSans");
-
         internal PluginInfo plugin;
 
         private void Awake()
         {
-            gameObject.AddComponent<CanvasGroup>();
+            gameObject.AddComponent<ContentSizeFitter>();
+            
+            gameObject.AddComponent<HorizontalLayoutGroup>();
 
-            GameObject labelHost = new("Label");
-            labelHost.transform.parent = transform;
+            GameObject labels = new("Labels", [typeof(VerticalLayoutGroup)]);
+            labels.transform.SetParent(transform, false);
 
-            Text label = labelHost.AddComponent<Text>();
-            label.font = font;
+            Text label = UIHelper.CreateLabel(labels, plugin.Metadata.Name);
+            label.gameObject.AddComponent<ContentSizeFitter>();
 
-            GameObject versionHost = new("Version");
-            versionHost.transform.parent = transform;
+            Text version = UIHelper.CreateLabel(labels, plugin.Metadata.Version.ToString());
+            version.gameObject.AddComponent<ContentSizeFitter>();
 
-            Text version = versionHost.AddComponent<Text>();
-            version.font = font;
-
-            label.text = plugin.Metadata.Name;
-            version.text = plugin.Metadata.Version.ToString();
+            version.gameObject.name = "Version";
 
             if (plugin.Instance is Mod mod)
             {
                 if (mod.options.runtimeOptions == Mod.Options.Runtime.TOGGLEABLE || mod.options.runtimeOptions == Mod.Options.Runtime.RELOADABLE)
                 {
-                    GameObject toggleHost = new("Toggle");
-                    toggleHost.transform.parent = transform;
-
-                    Toggle enable = toggleHost.AddComponent<Toggle>();
-                    enable.isOn = mod.enabled;
-
-                    enable.onValueChanged.AddListener(OnToggle);
+                    Toggle toggle = UIHelper.HostedComponent<Toggle>(gameObject);
+                    toggle.gameObject.name = "Toggle";
+                    toggle.isOn = mod.enabled;
+                    toggle.onValueChanged.AddListener(OnToggle);
                 }
 
                 if (mod.options.repository != string.Empty)
-                {
                     CheckUpdate();
-                }
             }
         }
 
