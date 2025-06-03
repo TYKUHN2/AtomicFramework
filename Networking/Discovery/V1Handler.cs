@@ -84,6 +84,10 @@ namespace AtomicFramework
                                     {
                                         IEndPoint peer = NetworkManagerNuclearOption.i.Client.Player.Address;
 
+                                        // If we are loading, we can toggle mods and can ignore their requirements
+                                        if (NetworkManagerNuclearOption.i.Client.Player.SceneIsReady && mod.options.runtimeOptions != Mod.Options.Runtime.NONE)
+                                            continue;
+
                                         if (options == Mod.Options.Multiplayer.REQUIRES_ALL ||
                                             (options == Mod.Options.Multiplayer.REQUIRES_HOST && 
                                             peer is SteamEndPoint steamPeer && 
@@ -108,7 +112,7 @@ namespace AtomicFramework
                                 mods[i] = reader.ReadString();
                             }
 
-                            Mods = mods;
+                            PushRequired(mods);
                         }
                         break;
                     case Commands.PORT:

@@ -21,7 +21,7 @@ namespace AtomicFramework
         private readonly Dictionary<ulong, IDiscoveryHandler?> knownPlayers = [];
 
         /// <summary>
-        /// Array of al players currently connected via the Discovery mechanism.
+        /// Array of all players currently connected via the Discovery mechanism.
         /// </summary>
         public ulong[] Players
         {
@@ -124,14 +124,20 @@ namespace AtomicFramework
             knownPlayers[player] = null;
             channel.Send(player, Handshake);
 
-            if (Interlocked.Decrement(ref pending) == 0)
+            int res = Interlocked.Decrement(ref pending);
+            if (res == 0)
                 Ready?.Invoke();
+            else if (res < 0)
+                res = 0;
         }
 
         private void Fail(ulong player, bool refused)
         {
-            if (Interlocked.Decrement(ref pending) == 0)
+            int res = Interlocked.Decrement(ref pending);
+            if (res == 0)
                 Ready?.Invoke();
+            else if (res < 0)
+                res = 0;
         }
 
         private void Disconnect(ulong player)

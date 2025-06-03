@@ -35,5 +35,10 @@ namespace AtomicFramework
         {
             OnMods?.Invoke();
         }
+
+        protected void PushRequired(string[] required)
+        {
+            OnRequired?.Invoke(required);
+        }
     }
 }

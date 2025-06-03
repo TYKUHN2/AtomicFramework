@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BepInEx;
+using HarmonyLib;
 using Mirage;
 using Mirage.SteamworksSocket;
 using NuclearOption.Networking;
@@ -6,6 +7,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using UnityEngine;
 
 namespace AtomicFramework
 {
@@ -198,22 +200,38 @@ namespace AtomicFramework
                 {
                     NetworkingManager.instance!.discovery.ModsAvailable -= Subscriber;
 
-                    string[] enabled = Plugin.Instance.PluginsEnabled()
-                        .Where(plugin => plugin.Instance is not Mod mod || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_ALL)
-                        .Select(plugin => plugin.Metadata.GUID)
+                    PluginInfo[] enabled = Plugin.Instance.PluginsEnabled()
+                        .Where(plugin => plugin.Instance is not Mod mod
+                        || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_ALL
+                        || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_HOST)
                         .ToArray();
 
-                    if (NetworkingManager.instance!.discovery.GetMods(iplayer).All(mod => enabled.Contains(mod)))
+                    string[] mods = NetworkingManager.instance!.discovery.GetMods(iplayer);
+
+                    foreach (PluginInfo plugin in enabled)
                     {
-                        if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
+                        if (mods.Contains(plugin.Metadata.GUID)) // Available, so we are good
+                            continue;
+
+                        if (plugin.Instance is Mod mod)
                         {
-                            ContinueAuthentication(player);
+                            if (mod.options.runtimeOptions != Mod.Options.Runtime.NONE) // Unavailable but can disable
+                            {
+                                mod.enabled = false;
+                                continue;
+                            }
                         }
-                    }
-                    else
-                    {
+
+                        // Cannot disable and is unavailable. Cannot join.
                         player.Disconnect();
                         NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+
+                        return;
+                    }
+
+                    if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
+                    {
+                        ContinueAuthentication(player);
                     }
                 }
             }
@@ -222,10 +240,32 @@ namespace AtomicFramework
 
             NetworkingManager.instance!.discovery.GetRequired(endpoint.Connection.SteamID.m_SteamID, required =>
             {
-                string[] enabled = Plugin.Instance.PluginsEnabled().Select(plugin => plugin.Metadata.GUID).ToArray();
+                PluginInfo[] loaded = [..Plugin.Instance.PluginsLoaded()];
+                PluginInfo[] loadedAndRequired = [..loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
 
-                if (required.All(mod => enabled.Contains(mod)))
+                if (loadedAndRequired.Length == required.Length) // All required are available
                 {
+                    foreach (PluginInfo info in loadedAndRequired)
+                    {
+                        if (((MonoBehaviour)info.Instance).enabled)
+                            continue;
+
+                        if (info.Instance is Mod mod)
+                        {
+                            if (mod.options.runtimeOptions != Mod.Options.Runtime.NONE)
+                            {
+                                mod.enabled = true;
+                                continue;
+                            }
+                        }
+
+                        // Mod disabled, required, cannot enable.
+                        player.Disconnect();
+                        NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+
+                        return;
+                    }
+
                     if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
                     {
                         ContinueAuthentication(player);
