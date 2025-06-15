@@ -10,8 +10,6 @@ namespace AtomicFramework.UI
 
         private void Awake()
         {
-            gameObject.AddComponent<ContentSizeFitter>();
-            
             gameObject.AddComponent<HorizontalLayoutGroup>();
 
             GameObject labels = new("Labels", [typeof(VerticalLayoutGroup)]);

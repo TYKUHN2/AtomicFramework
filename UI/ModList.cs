@@ -40,6 +40,10 @@ namespace AtomicFramework.UI
 
             GameObject superLayout = new("TopLayout", [typeof(VerticalLayoutGroup)]);
             superLayout.transform.SetParent(transform, false);
+            
+            RectTransform superTrans = superLayout.GetComponent<RectTransform>();
+            superTrans.anchorMin = Vector2.zero;
+            superTrans.anchorMax = Vector2.one;
 
             entryHost.transform.SetParent(superLayout.transform, false);
             VerticalLayoutGroup entryGroup = entryHost.AddComponent<VerticalLayoutGroup>();

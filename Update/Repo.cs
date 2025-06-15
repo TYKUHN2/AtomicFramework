@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -44,12 +46,31 @@ namespace AtomicFramework.Update
                 await result;
             }
 
-            if (result.IsCompletedSuccessfully)
-                File.Replace(path + ".download", path, path + ".bak");
+            if (!result.IsCompletedSuccessfully)
+            {
+                File.Delete(path + ".download");
+                return false;
+            }
+
+            Assembly downloaded = Assembly.ReflectionOnlyLoadFrom(path + ".download");
+
+            AssemblyName[] refs = downloaded.GetReferencedAssemblies()
+                .Where(name => name.Name.Contains("BepInEx")).ToArray();
+
+            // Caution: Might need updated as there could be unexpected indirect references
+
+#if BEP5
+            bool ourVersion = refs.Length == 0 || refs.Any(name => name.Name == "BepInEx");
+#elif BEP6
+            bool ourVersion = refs.Length == 0 || refs.Any(name => name.Name == "BepInEx.Core" || name.Name == "BepInEx.Unity.Mono");
+#else
+#error Unknown BepInEx Version
+#endif
+            if (ourVersion)
+                File.Replace(path, path + ".download", path + ".bak");
 
             File.Delete(path + ".download");
-
-            return result.IsCompletedSuccessfully;
+            return ourVersion;
         }
 
         private async Task<Release?> GetLatest(Mod mod)

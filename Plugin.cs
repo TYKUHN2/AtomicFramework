@@ -6,7 +6,6 @@ using UnityEngine;
 using System.Linq;
 using AtomicFramework.UI;
 
-
 #if BEP5
 using BepInEx.Bootstrap;
 #elif BEP6
