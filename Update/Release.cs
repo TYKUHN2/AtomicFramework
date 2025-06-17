@@ -1,4 +1,8 @@
-﻿using SemanticVersioning;
+﻿#if BEP6
+using SemanticVersioning;
+#else
+using System;
+#endif
 
 namespace AtomicFramework.Update
 {

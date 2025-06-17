@@ -50,7 +50,11 @@ namespace AtomicFramework
                     return null;
             }
 
+#if BEP6
             SemanticVersioning.Version version;
+#else
+            Version version;
+#endif
 
             try
             {
