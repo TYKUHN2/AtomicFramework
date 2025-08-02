@@ -40,10 +40,8 @@ namespace AtomicFramework.UI
 
         private static void OpenModMenu()
         {
-            GameObject host = new("ModList");
-            host.transform.parent = GameObject.Find("MainCanvas/OverlayMenuLayer").transform;
 
-            host.AddComponent<ModList>();
+            ModList.Attach(GameObject.Find("MainCanvas/OverlayMenuLayer").transform);
         }
     }
 }
