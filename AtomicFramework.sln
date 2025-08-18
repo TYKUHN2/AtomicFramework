@@ -3,36 +3,30 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35521.163
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicFramework", "AtomicFramework.csproj", "{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicFramework", "AtomicFramework\AtomicFramework.csproj", "{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicPatcher", "AtomicPatcher\AtomicPatcher.csproj", "{756F296C-53DB-420B-A915-C313065DBEFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug-Bep5|Any CPU = Debug-Bep5|Any CPU
 		Debug-Bep5|x64 = Debug-Bep5|x64
-		Debug-Bep6|Any CPU = Debug-Bep6|Any CPU
 		Debug-Bep6|x64 = Debug-Bep6|x64
-		Release-Bep5|Any CPU = Release-Bep5|Any CPU
 		Release-Bep5|x64 = Release-Bep5|x64
-		Release-Bep6|Any CPU = Release-Bep6|Any CPU
 		Release-Bep6|x64 = Release-Bep6|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep5|Any CPU.ActiveCfg = Debug-Bep5|Any CPU
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep5|Any CPU.Build.0 = Debug-Bep5|Any CPU
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep5|x64.ActiveCfg = Debug-Bep5|x64
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep5|x64.Build.0 = Debug-Bep5|x64
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep6|Any CPU.ActiveCfg = Debug-Bep6|Any CPU
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep6|Any CPU.Build.0 = Debug-Bep6|Any CPU
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep6|x64.ActiveCfg = Debug-Bep6|x64
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Debug-Bep6|x64.Build.0 = Debug-Bep6|x64
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep5|Any CPU.ActiveCfg = Release-Bep5|Any CPU
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep5|Any CPU.Build.0 = Release-Bep5|Any CPU
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep5|x64.ActiveCfg = Release-Bep5|x64
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep5|x64.Build.0 = Release-Bep5|x64
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|Any CPU.ActiveCfg = Release-Bep6|Any CPU
-		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|Any CPU.Build.0 = Release-Bep6|Any CPU
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|x64.ActiveCfg = Release-Bep6|x64
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|x64.Build.0 = Release-Bep6|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep5|x64.ActiveCfg = Debug-Bep5|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep6|x64.ActiveCfg = Debug-Bep6|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep5|x64.ActiveCfg = Release-Bep5|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep6|x64.ActiveCfg = Release-Bep6|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

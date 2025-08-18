@@ -66,6 +66,7 @@ namespace AtomicFramework
         private void LateLoad()
         {
             Logger.LogInfo($"LateLoading {MyPluginInfo.PLUGIN_GUID}");
+
             if (!SteamManager.Initialized)
             {
                 Logger.LogWarning("Steam is not initalized, networking will be unavailable.");
@@ -91,7 +92,7 @@ namespace AtomicFramework
         {
 #if BEP5
             PluginInfo[] plugins = Chainloader.PluginInfos.Values.Where(info => info.Instance != this).ToArray();
-#elif BEP6     
+#elif BEP6
             PluginInfo[] plugins = UnityChainloader.Instance.Plugins.Values.Where(info => info.Instance != this).ToArray();
 #else
 #error Undefined bepinex version
