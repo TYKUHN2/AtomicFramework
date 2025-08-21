@@ -28,6 +28,9 @@ Otherwise, AtomicFramework can be added as any other library dependency.
 All AtomicFramework mods are declared by extending the [`Mod`](./Mod.cs) class.
 Once the class is extended, API instances tailored specifically to your mod will be made available.
 
+Of note is that the `Mod` class automatically carries a dependency on AtomicFramework affecting load order.
+AtomicFramework also includes a dependency on the NuclearOption process, implicitly carried down via `Mod`.
+
 ### Features
 AtomicFramework currently support easy Steam based networking ensuring your mod does not conflict
 with other compatible mods.
