@@ -21,7 +21,7 @@
     <Platforms>x64</Platforms>
     <Configurations>Debug-Bep6;Release-Bep6;Debug-Bep5;Release-Bep5</Configurations>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <NoWarn>BepInEx002;IDE1006;IDE0130</NoWarn>
+    <NoWarn>BepInEx001;BepInEx002;IDE1006;IDE0130</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">

@@ -20,7 +20,10 @@ namespace AtomicFramework
         /// <summary>
         /// The fraction of packets lost in either direction on the connection.
         /// </summary>
-        public readonly float packetLoss = 1 - Math.Min(status.m_flConnectionQualityLocal, status.m_flConnectionQualityRemote);
+        public readonly float packetLoss = Math.Clamp(
+            1 - Math.Min(status.m_flConnectionQualityLocal, status.m_flConnectionQualityRemote),
+            0,
+            1);
 
         /// <summary>
         /// The estimated bandwidth of the connection.

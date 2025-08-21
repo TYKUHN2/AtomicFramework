@@ -66,8 +66,9 @@ namespace AtomicFramework
         /// </summary>
         /// <param name="player">SteamID of player to send to.</param>
         /// <param name="message">Data to send.</param>
+        /// <param name="fast">Whether to send data as fast as possible or reliably (default.)</param>
         /// <exception cref="IOException">Player is not connected.</exception>
-        public void Send(ulong player, byte[] message)
+        public void Send(ulong player, byte[] message, bool fast = false)
         {
             if (connections.TryGetValue(player, out HSteamNetConnection conn))
             {
@@ -75,7 +76,7 @@ namespace AtomicFramework
                 {
                     fixed (byte* buf = message)
                     {
-                        SteamNetworkingSockets.SendMessageToConnection(conn, (IntPtr)buf, (uint)message.Length, 8, out _);
+                        SteamNetworkingSockets.SendMessageToConnection(conn, (IntPtr)buf, (uint)message.Length, fast ? 8 : 5, out _);
                     }
                 }
             }
