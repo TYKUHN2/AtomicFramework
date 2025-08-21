@@ -107,7 +107,7 @@ namespace AtomicFramework
             Type netManager = typeof(NetworkManagerNuclearOption);
             harmony.Patch(
                 netManager.GetMethod("Awake"),
-                null, 
+                null,
                 HookMethod(NetworkManagerPostfix)
             );
             harmony.Patch(
@@ -138,7 +138,7 @@ namespace AtomicFramework
         {
             Plugin.Logger.LogDebug("Reached GameLoaded");
             GameLoaded?.Invoke();
-            
+
             MethodBase original = harmony.GetPatchedMethods().Where(a => a.DeclaringType == typeof(MainMenu)).First();
             harmony.Unpatch(original, HookMethod(MainMenuPostfix).method);
         }
@@ -240,8 +240,8 @@ namespace AtomicFramework
 
             NetworkingManager.instance!.discovery.GetRequired(endpoint.Connection.SteamID.m_SteamID, required =>
             {
-                PluginInfo[] loaded = [..Plugin.Instance.PluginsLoaded()];
-                PluginInfo[] loadedAndRequired = [..loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
+                PluginInfo[] loaded = [.. Plugin.Instance.PluginsLoaded()];
+                PluginInfo[] loadedAndRequired = [.. loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
 
                 if (loadedAndRequired.Length == required.Length) // All required are available
                 {

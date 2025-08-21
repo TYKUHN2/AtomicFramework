@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using Mirage.SocketLayer;
 using Mirage.SteamworksSocket;
 using NuclearOption.Networking;
@@ -65,7 +65,7 @@ namespace AtomicFramework
 
                             writer.Write((byte)Commands.REQUIRE);
 
-                            PluginInfo[] plugins = [..Plugin.Instance.PluginsEnabled()];
+                            PluginInfo[] plugins = [.. Plugin.Instance.PluginsEnabled()];
 
                             List<string> required = [];
 
@@ -89,8 +89,8 @@ namespace AtomicFramework
                                             continue;
 
                                         if (options == Mod.Options.Multiplayer.REQUIRES_ALL ||
-                                            (options == Mod.Options.Multiplayer.REQUIRES_HOST && 
-                                            peer is SteamEndPoint steamPeer && 
+                                            (options == Mod.Options.Multiplayer.REQUIRES_HOST &&
+                                            peer is SteamEndPoint steamPeer &&
                                             steamPeer.Connection.SteamID.m_SteamID == message.player))
                                             required.Add(plugin.Metadata.GUID);
                                     }
@@ -118,7 +118,7 @@ namespace AtomicFramework
                     case Commands.PORT:
                         string GUID = reader.ReadString();
                         ushort channel = reader.ReadUInt16();
-                        
+
                         if (stream.Position == stream.Length) // request
                         {
                             MemoryStream output = new();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -54,8 +54,7 @@ namespace AtomicFramework.Update
 
             Assembly downloaded = Assembly.ReflectionOnlyLoadFrom(path + ".download");
 
-            AssemblyName[] refs = downloaded.GetReferencedAssemblies()
-                .Where(name => name.Name.Contains("BepInEx")).ToArray();
+            AssemblyName[] refs = [.. downloaded.GetReferencedAssemblies().Where(name => name.Name.Contains("BepInEx"))];
 
             // Caution: Might need updated as there could be unexpected indirect references
 

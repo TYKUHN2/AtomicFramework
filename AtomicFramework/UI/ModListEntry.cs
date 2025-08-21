@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -8,37 +8,12 @@ namespace AtomicFramework.UI
 {
     internal class ModListEntry: MonoBehaviour
     {
+#pragma warning disable CS8618
         internal PluginInfo plugin;
+#pragma warning restore CS8618
 
         private void Awake()
         {
-            /*gameObject.AddComponent<HorizontalLayoutGroup>();
-
-            GameObject labels = new("Labels", [typeof(HorizontalLayoutGroup)]);
-            labels.transform.SetParent(transform, false);
-
-            Text label = UIHelper.CreateLabel(labels, plugin.Metadata.Name);
-            label.gameObject.AddComponent<ContentSizeFitter>();
-
-            Text version = UIHelper.CreateLabel(labels, plugin.Metadata.Version.ToString());
-            version.gameObject.AddComponent<ContentSizeFitter>();
-
-            version.gameObject.name = "Version";
-
-            if (plugin.Instance is Mod mod)
-            {
-                if (mod.options.runtimeOptions == Mod.Options.Runtime.TOGGLEABLE || mod.options.runtimeOptions == Mod.Options.Runtime.RELOADABLE)
-                {
-                    Toggle toggle = UIHelper.HostedComponent<Toggle>(gameObject);
-                    toggle.gameObject.name = "Toggle";
-                    toggle.isOn = mod.enabled;
-                    toggle.onValueChanged.AddListener(OnToggle);
-                }
-
-                if (mod.options.repository != string.Empty)
-                    CheckUpdate();
-            }*/
-
             TextMeshProUGUI label = transform.Find("Labels/Name").GetComponent<TextMeshProUGUI>();
             TextMeshProUGUI version = transform.Find("Labels/Version").GetComponent<TextMeshProUGUI>();
 

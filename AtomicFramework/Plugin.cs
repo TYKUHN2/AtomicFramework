@@ -39,10 +39,7 @@ namespace AtomicFramework
             get { return Instance._Logger; }
         }
 
-        private ManualLogSource _Logger
-        {
-            get { return base.Logger; }
-        }
+        private ManualLogSource _Logger => base.Logger;
 
         private Plugin()
         {
@@ -74,8 +71,8 @@ namespace AtomicFramework
             }
 
             PluginInfo[] plugins = PluginsLoaded();
-            string[] legacy = plugins.Where(plugin => plugin.Instance is not Mod).Select(plugin => plugin.Metadata.GUID).ToArray();
-            string[] modern = plugins.Where(plugin => plugin.Instance is Mod).Select(plugin => plugin.Metadata.GUID).ToArray();
+            string[] legacy = [.. plugins.Where(plugin => plugin.Instance is not Mod).Select(plugin => plugin.Metadata.GUID)];
+            string[] modern = [.. plugins.Where(plugin => plugin.Instance is Mod).Select(plugin => plugin.Metadata.GUID)];
 
             Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
             Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
@@ -85,15 +82,15 @@ namespace AtomicFramework
 
         internal PluginInfo[] PluginsEnabled()
         {
-            return PluginsLoaded().Where(info => ((MonoBehaviour)info.Instance).enabled).ToArray();
+            return [.. PluginsLoaded().Where(info => ((MonoBehaviour)info.Instance).enabled)];
         }
 
         internal PluginInfo[] PluginsLoaded()
         {
 #if BEP5
-            PluginInfo[] plugins = Chainloader.PluginInfos.Values.Where(info => info.Instance != this).ToArray();
+            PluginInfo[] plugins = [.. Chainloader.PluginInfos.Values.Where(info => info.Instance != this)];
 #elif BEP6
-            PluginInfo[] plugins = UnityChainloader.Instance.Plugins.Values.Where(info => info.Instance != this).ToArray();
+            PluginInfo[] plugins = [.. UnityChainloader.Instance.Plugins.Values.Where(info => info.Instance != (object)this)];
 #else
 #error Undefined bepinex version
 #endif

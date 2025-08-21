@@ -1,4 +1,4 @@
-﻿using Steamworks;
+using Steamworks;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System;
@@ -39,7 +39,7 @@ namespace AtomicFramework
 #pragma warning restore CS8618
         {
             statusChanged = Callback<SteamNetConnectionStatusChangedCallback_t>.Create(OnStatusChanged);
-            
+
             SteamNetworking.AllowP2PPacketRelay(true);
 
             switch (SteamNetworkingSockets.GetAuthenticationStatus(out _))
@@ -121,7 +121,9 @@ namespace AtomicFramework
                 {
                     unsafe
                     {
+#pragma warning disable CS8500
                         SteamNetworkingMessage_t* message = (SteamNetworkingMessage_t*)ptrs[i];
+#pragma warning restore CS8500
 
                         byte[] data = new byte[message->m_cbSize];
                         Marshal.Copy(message->m_pData, data, 0, data.Length);

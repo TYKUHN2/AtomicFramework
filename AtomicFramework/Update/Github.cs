@@ -1,4 +1,4 @@
-﻿using AtomicFramework.Update;
+using AtomicFramework.Update;
 using System;
 using System.IO;
 using System.Linq;
@@ -36,7 +36,8 @@ namespace AtomicFramework
 
                 if (release == null)
                     return null;
-            } else
+            }
+            else
             {
                 HttpResponseMessage resp = await client.GetAsync(target + "/releases/latest");
                 if (!resp.IsSuccessStatusCode)
@@ -66,10 +67,10 @@ namespace AtomicFramework
             }
 
             string repo = target.Split("/")[1].ToLower();
-            JSONAsset[] plugins = release.assets.Where(asset =>
+            JSONAsset[] plugins = [.. release.assets.Where(asset =>
                 asset.name.StartsWith(repo, StringComparison.OrdinalIgnoreCase) &&
                 asset.name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
-            ).ToArray();
+            )];
 
             if (plugins.Length == 0)
                 return null;

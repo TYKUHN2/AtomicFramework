@@ -27,7 +27,7 @@ namespace AtomicFramework
         {
             get
             {
-                return [..knownPlayers.Keys];
+                return [.. knownPlayers.Keys];
             }
         }
 
