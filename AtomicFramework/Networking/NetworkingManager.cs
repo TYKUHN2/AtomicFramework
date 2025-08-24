@@ -166,13 +166,24 @@ namespace AtomicFramework
 
         private void OnStatusChanged(SteamNetConnectionStatusChangedCallback_t change)
         {
+            if (change.m_info.m_hListenSocket != HSteamListenSocket.Invalid && !sockets.ContainsKey(change.m_info.m_hListenSocket))
+            {
+                Redirect(change);
+                return;
+            }
+
+            if (change.m_info.m_hListenSocket == HSteamListenSocket.Invalid && !connections.ContainsKey(change.m_hConn))
+            {
+                Redirect(change);
+                return;
+            }
+
             switch (change.m_info.m_eState)
             {
                 case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting:
                     OnConnection(change.m_info.m_hListenSocket, change.m_hConn, change.m_info.m_identityRemote);
                     break;
                 case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected:
-                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_FindingRoute:
                     OnConnected(change.m_hConn, change.m_info.m_identityRemote);
                     break;
                 case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer:
@@ -306,6 +317,24 @@ namespace AtomicFramework
         internal void NotifyClosed(HSteamNetConnection conn)
         {
             connections.Remove(conn);
+        }
+
+        private void Redirect(SteamNetConnectionStatusChangedCallback_t change)
+        {
+            if (NetworkManagerNuclearOption.i.Server.Active)
+            {
+                Peer peer = (Peer)AccessTools.Field("Mirage.NetworkServer:_peer").GetValue(NetworkManagerNuclearOption.i.Server);
+                SteamSocket socket = (SteamSocket)AccessTools.Field("Mirage.SocketLayer.Peer:_socket").GetValue(peer);
+                Server server = (Server)AccessTools.Field("Mirage.SteamworksSocket.SteamSocket:common").GetValue(socket);
+                AccessTools.Method("Mirage.SteamworksSocket.Server:OnConnectionStatusChanged").Invoke(server, [change]);
+            }
+            else if (NetworkManagerNuclearOption.i.Client.Active)
+            {
+                Peer peer = (Peer)AccessTools.Field("Mirage.NetworkClient:_peer").GetValue(NetworkManagerNuclearOption.i.Client);
+                SteamSocket socket = (SteamSocket)AccessTools.Field("Mirage.SocketLayer.Peer:_socket").GetValue(peer);
+                Client client = (Client)AccessTools.Field("Mirage.SteamworksSocket.SteamSocket:common").GetValue(socket);
+                AccessTools.Method("Mirage.SteamworksSocket.Client:OnConnectionStatusChanged").Invoke(client, [change]);
+            }
         }
     }
 }
