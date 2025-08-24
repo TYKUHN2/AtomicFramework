@@ -15,7 +15,7 @@ namespace AtomicFramework
         internal event Action? OnMods;
 
         internal abstract void Receive(NetworkMessage message);
-        internal abstract void GetPort(string GUID, int channel);
+        internal abstract void GetPort(string GUID, ushort channel);
         internal abstract void GetRequired();
 
         internal virtual void Ready()

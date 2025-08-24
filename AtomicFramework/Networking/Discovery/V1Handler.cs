@@ -20,6 +20,7 @@ namespace AtomicFramework
 
         internal override void Receive(NetworkMessage message)
         {
+            Plugin.Logger.LogDebug("V1Discovery.Receive");
             MemoryStream stream = new(message.data, false);
             BinaryReader reader = new(stream);
 
@@ -30,12 +31,15 @@ namespace AtomicFramework
                     case Commands.DISCOVER:
                         if (message.data.Length == 1) // Request
                         {
+                            Plugin.Logger.LogDebug("V1Discovery.Discover.In");
                             MemoryStream output = new();
                             BinaryWriter writer = new(output);
 
                             writer.Write((byte)Commands.DISCOVER);
 
-                            string[] mods = Plugin.Instance.PluginsEnabled().Select(plugin => plugin.Metadata.GUID).ToArray();
+                            string[] mods = [.. Plugin.Instance.PluginsEnabled()
+                                .Where(a => a.Instance is Mod)
+                                .Select(plugin => plugin.Metadata.GUID)];
 
                             writer.Write((uint)mods.Length);
                             foreach (string mod in mods)
@@ -47,6 +51,7 @@ namespace AtomicFramework
                         }
                         else
                         {
+                            Plugin.Logger.LogDebug("V1Discovery.Discover.Out");
                             string[] mods = new string[reader.ReadUInt32()];
                             for (int i = 0; i < mods.Length; i++)
                             {
@@ -60,6 +65,7 @@ namespace AtomicFramework
                     case Commands.REQUIRE:
                         if (message.data.Length == 1) // Request
                         {
+                            Plugin.Logger.LogDebug("V1Discovery.Require.In");
                             MemoryStream output = new();
                             BinaryWriter writer = new(output);
 
@@ -95,8 +101,8 @@ namespace AtomicFramework
                                             required.Add(plugin.Metadata.GUID);
                                     }
                                 }
-                                else
-                                    required.Add(plugin.Metadata.GUID);
+                                //else
+                                    //required.Add(plugin.Metadata.GUID);
                             }
 
                             writer.Write(required.Count);
@@ -106,6 +112,7 @@ namespace AtomicFramework
                         }
                         else
                         {
+                            Plugin.Logger.LogDebug("V1Discovery.Require.Out");
                             string[] mods = new string[reader.ReadUInt32()];
                             for (int i = 0; i < mods.Length; i++)
                             {
@@ -121,6 +128,7 @@ namespace AtomicFramework
 
                         if (stream.Position == stream.Length) // request
                         {
+                            Plugin.Logger.LogDebug("V1Discovery.Port.In");
                             MemoryStream output = new();
                             BinaryWriter writer = new(output);
 
@@ -146,7 +154,10 @@ namespace AtomicFramework
                             PushMessage(output.ToArray());
                         }
                         else
+                        {
+                            Plugin.Logger.LogDebug("V1Discovery.Port.Out");
                             PushDiscovery(GUID, channel, reader.ReadUInt16());
+                        }
                         break;
                 }
             }
@@ -155,7 +166,7 @@ namespace AtomicFramework
                 Plugin.Logger.LogWarning($"Discovery packet invalid from {message.player:X}");
             }
         }
-        internal override void GetPort(string GUID, int channel)
+        internal override void GetPort(string GUID, ushort channel)
         {
             MemoryStream str = new();
             BinaryWriter writer = new(str);
