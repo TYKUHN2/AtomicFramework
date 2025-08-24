@@ -1,4 +1,4 @@
-﻿using NuclearOption.Networking;
+using NuclearOption.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,8 +44,12 @@ namespace AtomicFramework
         /// </summary>
         public event Action<ulong>? ModsAvailable;
 
+        internal event Action<ulong>? ConnectionResolved;
+
         internal Discovery()
         {
+            Plugin.Logger.LogDebug("Discovery Available");
+
             channel.OnConnection = ConnectionFilter;
             channel.OnConnected += Discover;
             channel.OnConnectionFailed += Fail;
@@ -89,6 +93,12 @@ namespace AtomicFramework
 
         internal void GetPort(ulong player, string GUID, ushort channel, Action<ushort> callback)
         {
+            if (GUID == "AtomicFramework" && channel == 0)
+            {
+                callback(1);
+                return;
+            }    
+
             if (knownPlayers.TryGetValue(player, out IDiscoveryHandler? handler) && handler != null)
             {
                 if (handler.Mods.Length > 0 && !handler.Mods.Contains(GUID))
@@ -116,11 +126,14 @@ namespace AtomicFramework
 
         private bool ConnectionFilter(ulong player)
         {
-            return NetworkManagerNuclearOption.i.Server.Active || UnitRegistry.playerLookup.Values.Any(play => play.SteamID == player);
+            Plugin.Logger.LogDebug($"Received Discovery Connection {player}");
+
+            return NetworkingManager.IsServer() || NetworkingManager.IsPeer(player) || NetworkingManager.IsHost(player);
         }
 
         private void Discover(ulong player)
         {
+            Plugin.Logger.LogDebug($"Discovering {player}");
             knownPlayers[player] = null;
             channel.Send(player, Handshake);
 
@@ -133,6 +146,10 @@ namespace AtomicFramework
 
         private void Fail(ulong player, bool refused)
         {
+            Plugin.Logger.LogDebug($"Discovery failed for {player}");
+
+            ConnectionResolved?.Invoke(player);
+
             int res = Interlocked.Decrement(ref pending);
             if (res == 0)
                 Ready?.Invoke();
@@ -142,14 +159,18 @@ namespace AtomicFramework
 
         private void Disconnect(ulong player)
         {
+            Plugin.Logger.LogDebug($"Discovery disconnected {player}");
             knownPlayers.Remove(player);
         }
 
         private void Handler(NetworkMessage message)
         {
+            Plugin.Logger.LogDebug($"Discovery message from {message.player}");
             IDiscoveryHandler? handler = knownPlayers[message.player];
             if (handler == null)
             {
+                Plugin.Logger.LogDebug($"Starting handler");
+
                 if (message.data.Length == Handshake.Length && memcmp(message.data, Handshake, Handshake.Length) == 0)
                 {
                     V1Handler nHandler = new();
@@ -158,6 +179,8 @@ namespace AtomicFramework
                     nHandler.Ready();
 
                     knownPlayers[message.player] = nHandler;
+
+                    ConnectionResolved?.Invoke(message.player);
                 }
                 else
                     channel.Disconnect(message.player);
@@ -166,12 +189,17 @@ namespace AtomicFramework
                 handler.Receive(message);
         }
 
+        internal void ConnectTo(ulong player)
+        {
+            channel.Connect(player);
+        }
+
         private void MissionLoaded()
         {
             // Multiplayer and not host
             if (GameManager.gameState == GameManager.GameState.Multiplayer && !NetworkManagerNuclearOption.i.Server.Active)
             {
-                Player[] players = UnitRegistry.playerLookup.Values.Where(player => player != GameManager.LocalPlayer).ToArray();
+                Player[] players = [.. UnitRegistry.playerLookup.Values.Where(player => player != GameManager.LocalPlayer)];
                 pending = players.Length;
 
                 foreach (Player player in players)
