@@ -78,6 +78,8 @@ namespace AtomicFramework
             Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
 
             ModButton.Init();
+
+            gameObject.AddComponent<NetworkingManager>();
         }
 
         internal PluginInfo[] PluginsEnabled()
