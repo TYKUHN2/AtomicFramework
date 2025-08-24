@@ -6,6 +6,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
 using NuclearOption.Networking;
+using Mirage.SteamworksSocket;
+using HarmonyLib;
+using Mirage.SocketLayer;
+using System.IO;
 
 namespace AtomicFramework
 {
@@ -14,11 +18,14 @@ namespace AtomicFramework
     /// </summary>
     public class NetworkingManager: MonoBehaviour
     {
-        internal static NetworkingManager? instance;
+        public static NetworkingManager? instance
+        {
+            get; private set;
+        }
 
         private readonly SemaphoreSlim listenLock = new(1);
 
-        private readonly List<ushort> ports = [];
+        private readonly List<ushort> ports = [0];
         internal readonly Dictionary<HSteamListenSocket, ushort> revPorts = [];
         private readonly Dictionary<HSteamListenSocket, NetworkChannel> sockets = [];
         internal readonly Dictionary<HSteamNetConnection, NetworkChannel> connections = [];
@@ -26,8 +33,6 @@ namespace AtomicFramework
         private readonly Callback<SteamNetConnectionStatusChangedCallback_t> statusChanged;
 
         private readonly HSteamNetPollGroup poll = SteamNetworkingSockets.CreatePollGroup();
-
-        private int lastFrame = Time.frameCount;
 
         /// <summary>
         /// Access to the <see cref="Discovery">Discovery</see> instance.
@@ -98,9 +103,24 @@ namespace AtomicFramework
         /// </summary>
         /// <param name="steamid">SteamID to convert.</param>
         /// <returns>Game Player object.</returns>
-        public Player? GetPlayer(ulong steamid)
+        public static Player? GetPlayer(ulong steamid)
         {
             return UnitRegistry.playerLookup.Values.FirstOrDefault(player => player.SteamID == steamid);
+        }
+
+        public static bool IsServer()
+        {
+            return NetworkManagerNuclearOption.i.Server.Active;
+        }
+
+        public static bool IsPeer(ulong player)
+        {
+            return GetPlayer(player) != null;
+        }
+
+        public static bool IsHost(ulong player)
+        {
+            return (NetworkManagerNuclearOption.i.Client.Player.Address as SteamEndPoint)?.Connection.SteamID.m_SteamID == player;
         }
 
         private void OnDestroy()
@@ -110,11 +130,6 @@ namespace AtomicFramework
 
         private void FixedUpdate()
         {
-            if (Time.frameCount == lastFrame)
-                return;
-
-            lastFrame = Time.frameCount;
-
             IntPtr[] ptrs = new IntPtr[64];
 
             while (true)
@@ -186,11 +201,17 @@ namespace AtomicFramework
         }
         private void OnConnection(HSteamListenSocket listen, HSteamNetConnection conn, SteamNetworkingIdentity remote)
         {
+            if (listen == HSteamListenSocket.Invalid)
+                return;
+
             NetworkChannel channel = sockets[listen];
 
-            if (GameManager.gameState == GameManager.GameState.Multiplayer &&
-                (NetworkManagerNuclearOption.i.Server.Active || GetPlayer(remote.GetSteamID64()) != null) &&
-                channel.ReceiveConnection(remote.GetSteamID64(), conn))
+            bool cond1 = GameManager.gameState == GameManager.GameState.Multiplayer &&
+            (IsServer() || IsPeer(remote.GetSteamID64()));
+
+            bool cond2 = IsHost(remote.GetSteamID64());
+
+            if ((cond1 || cond2) && channel.ReceiveConnection(remote.GetSteamID64(), conn))
             {
                 SteamNetworkingSockets.AcceptConnection(conn);
                 connections[conn] = channel;
@@ -198,15 +219,15 @@ namespace AtomicFramework
                 SteamNetworkingSockets.SetConnectionPollGroup(conn, poll);
             }
             else
-                SteamNetworkingSockets.CloseConnection(conn, 1001, "Connection refused", false);
+                SteamNetworkingSockets.CloseConnection(conn, 1001, $"Connection refused ({cond1} {cond2})", false);
         }
 
         private void OnConnected(HSteamNetConnection conn, SteamNetworkingIdentity remote)
         {
             NetworkChannel channel = connections[conn];
+            SteamNetworkingSockets.SetConnectionPollGroup(conn, poll);
 
             channel.NotifyConnected(remote.GetSteamID64(), conn);
-            SteamNetworkingSockets.SetConnectionPollGroup(conn, poll);
         }
 
         private void OnDisconnect(HSteamNetConnection conn, SteamNetworkingIdentity remote, ESteamNetConnectionEnd _)
@@ -233,6 +254,8 @@ namespace AtomicFramework
 
         internal NetworkChannel OpenListen(string GUID, ushort channel)
         {
+            Plugin.Logger.LogDebug($"Allocating {GUID}:{channel}");
+
             listenLock.Wait();
 
             HSteamListenSocket socket = HSteamListenSocket.Invalid;
@@ -259,6 +282,10 @@ namespace AtomicFramework
                 revPorts[socket] = end;
             }
 
+            if (socket == HSteamListenSocket.Invalid)
+                throw new IOException("Failed to generate socket");
+
+            Plugin.Logger.LogDebug($"Channel for socket {socket.m_HSteamListenSocket} open");
             NetworkChannel chan = new(socket, GUID, channel);
             sockets[socket] = chan;
             listenLock.Release();
