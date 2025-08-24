@@ -1,8 +1,9 @@
-﻿using BepInEx;
+using BepInEx;
 using HarmonyLib;
 using Mirage;
 using Mirage.SteamworksSocket;
 using NuclearOption.Networking;
+using Steamworks;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -117,16 +118,26 @@ namespace AtomicFramework
 
             harmony.Patch( // Maybe todo: replace with a direct listener on NetworkServer
                 netManager.GetMethod("OnServerDisconnect", BindingFlags.NonPublic | BindingFlags.Instance),
-                null,
-                HookMethod(ServerDisconnectCallback)
+                postfix: HookMethod(ServerDisconnectCallback)
             );
 
             Type mainMenu = typeof(MainMenu);
             harmony.Patch(
                 mainMenu.GetMethod("Start", BindingFlags.NonPublic | BindingFlags.Instance),
-                null,
-                HookMethod(MainMenuPostfix)
+                postfix: HookMethod(MainMenuPostfix)
             );
+
+            Type server = typeof(Server);
+            harmony.Patch(
+                server.GetConstructors()[0],
+                postfix: HookMethod(KillCallback)
+                );
+
+            Type client = typeof(Client);
+            harmony.Patch(
+                client.GetMethod("ConnectAsync", BindingFlags.NonPublic | BindingFlags.Instance),
+                postfix: HookMethod(KillCallback)
+                );
         }
 
         private static HarmonyMethod HookMethod(Delegate hook)
@@ -306,6 +317,11 @@ namespace AtomicFramework
                 player.Disconnect();
                 NetworkingManager.instance!.Kill(id);
             }
+        }
+
+        private static void KillCallback(Callback<SteamNetConnectionStatusChangedCallback_t> ___c_onConnectionChange)
+        {
+            ___c_onConnectionChange.Unregister();
         }
     }
 }
