@@ -138,21 +138,16 @@ namespace AtomicFramework
 
                 for (int i = 0; i < received; i++)
                 {
-                    unsafe
-                    {
-#pragma warning disable CS8500
-                        SteamNetworkingMessage_t* message = (SteamNetworkingMessage_t*)ptrs[i];
-#pragma warning restore CS8500
+                    SteamNetworkingMessage_t message = SteamNetworkingMessage_t.FromIntPtr(ptrs[i]);
 
-                        byte[] data = new byte[message->m_cbSize];
-                        Marshal.Copy(message->m_pData, data, 0, data.Length);
+                    byte[] data = new byte[message.m_cbSize];
+                    Marshal.Copy(message.m_pData, data, 0, data.Length);
 
-                        NetworkChannel channel = connections[message->m_conn];
-                        channel.ReceiveMessage(new(data, message->m_identityPeer.GetSteamID64()));
+                    SteamNetworkingMessage_t.Release(ptrs[i]);
 
-                        SteamNetworkingMessage_t.Release((IntPtr)message);
+                    if (connections.TryGetValue(message.m_conn, out NetworkChannel channel))
+                        channel.ReceiveMessage(new(data, message.m_identityPeer.GetSteamID64()));
                     }
-                }
 
                 if (received < 64)
                     break;
