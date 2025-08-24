@@ -203,21 +203,24 @@ namespace AtomicFramework
                 return false;
             }
 
+            NetworkingManager.instance!.discovery.ConnectTo(endpoint.Connection.SteamID.m_SteamID);
+
             int checkpoint = 0;
 
             void Subscriber(ulong iplayer)
             {
+                Plugin.Logger.LogDebug("Subscriber");
                 if (iplayer == endpoint.Connection.SteamID.m_SteamID)
                 {
                     NetworkingManager.instance!.discovery.ModsAvailable -= Subscriber;
 
-                    PluginInfo[] enabled = Plugin.Instance.PluginsEnabled()
-                        .Where(plugin => plugin.Instance is not Mod mod
-                        || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_ALL
-                        || mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_HOST)
-                        .ToArray();
+                    PluginInfo[] enabled = [.. Plugin.Instance.PluginsEnabled()
+                        .Where(plugin => plugin.Instance is Mod mod
+                        && mod.options.multiplayerOptions == Mod.Options.Multiplayer.REQUIRES_ALL)];
 
                     string[] mods = NetworkingManager.instance!.discovery.GetMods(iplayer);
+
+                    Plugin.Logger.LogDebug($"Got [{string.Join(", ", mods)}]   need   [{string.Join(", ", enabled.Select(a => a.Metadata.GUID))}]");
 
                     foreach (PluginInfo plugin in enabled)
                     {
@@ -232,13 +235,21 @@ namespace AtomicFramework
                                 continue;
                             }
                         }
+                        else
+                            continue; // A lot of legacy plugins are much more careful about either making sure they are safe,
+                                      // or informing users. We should change this back later once Mod becomes more popular
+                                      // or a more user-centric mechanism is available.
 
                         // Cannot disable and is unavailable. Cannot join.
                         player.Disconnect();
                         NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
 
+                        Plugin.Logger.LogDebug("Discovery.Subscriber.Kill");
+
                         return;
                     }
+
+                    Plugin.Logger.LogDebug("Discovery.Subscriber.Passed");
 
                     if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
                     {
