@@ -1,4 +1,4 @@
-﻿using Steamworks;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -98,7 +98,10 @@ namespace AtomicFramework
                 SteamNetworkingIdentity identity = new();
                 identity.SetSteamID64(address);
 
-                SteamNetworkingSockets.ConnectP2P(ref identity, port, 0, []);
+                HSteamNetConnection conn = SteamNetworkingSockets.ConnectP2P(ref identity, port, 0, []);
+                NetworkingManager.instance!.connections[conn] = this;
+
+                connections[address] = conn;
             }
 
             NetworkingManager.instance!.discovery.GetPort(address, GUID, channel, OnPort);

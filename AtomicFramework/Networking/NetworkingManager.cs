@@ -21,7 +21,7 @@ namespace AtomicFramework
         private readonly List<ushort> ports = [];
         internal readonly Dictionary<HSteamListenSocket, ushort> revPorts = [];
         private readonly Dictionary<HSteamListenSocket, NetworkChannel> sockets = [];
-        private readonly Dictionary<HSteamNetConnection, NetworkChannel> connections = [];
+        internal readonly Dictionary<HSteamNetConnection, NetworkChannel> connections = [];
 
         private readonly Callback<SteamNetConnectionStatusChangedCallback_t> statusChanged;
 
