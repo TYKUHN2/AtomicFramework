@@ -1,10 +1,11 @@
-using BepInEx;
+﻿using BepInEx;
 using HarmonyLib;
 using Mirage;
 using Mirage.SteamworksSocket;
 using NuclearOption.Networking;
 using Steamworks;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -45,6 +46,8 @@ namespace AtomicFramework
                 }
             }
         }
+
+        private static readonly List<INetworkPlayer> pending = [];
 
         private static readonly Harmony harmony = new("xyz.tyknet.NuclearOption");
 
@@ -188,6 +191,16 @@ namespace AtomicFramework
 
         private static bool ClientAuthenticatingCallback(INetworkPlayer player)
         {
+            if (player.IsHost)
+                return true;
+
+            if (pending.Contains(player))
+            {
+                pending.Remove(player);
+                return true;
+            }
+
+            Plugin.Logger.LogDebug("ClientAutheticatingCallback");
             if (player.Address is not SteamEndPoint endpoint)
             {
                 Plugin.Logger.LogWarning("Non-Steam player detected. Cannot validate.");
@@ -258,47 +271,60 @@ namespace AtomicFramework
                 }
             }
 
-            NetworkingManager.instance!.discovery.ModsAvailable += Subscriber;
-
-            NetworkingManager.instance!.discovery.GetRequired(endpoint.Connection.SteamID.m_SteamID, required =>
+            NetworkingManager.instance!.discovery.ConnectionResolved += resolve_for =>
             {
-                PluginInfo[] loaded = [.. Plugin.Instance.PluginsLoaded()];
-                PluginInfo[] loadedAndRequired = [.. loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
+                if (resolve_for != endpoint.Connection.SteamID.m_SteamID)
+                    return;
 
-                if (loadedAndRequired.Length == required.Length) // All required are available
+                NetworkingManager.instance!.discovery.ModsAvailable += Subscriber;
+
+                NetworkingManager.instance!.discovery.GetRequired(endpoint.Connection.SteamID.m_SteamID, required =>
                 {
-                    foreach (PluginInfo info in loadedAndRequired)
-                    {
-                        if (((MonoBehaviour)info.Instance).enabled)
-                            continue;
+                    Plugin.Logger.LogDebug("GetRequired");
+                    PluginInfo[] loaded = [.. Plugin.Instance.PluginsLoaded()];
+                    PluginInfo[] loadedAndRequired = [.. loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
 
-                        if (info.Instance is Mod mod)
+                    if (loadedAndRequired.Length == required.Length) // All required are available
+                    {
+                        foreach (PluginInfo info in loadedAndRequired)
                         {
-                            if (mod.options.runtimeOptions != Mod.Options.Runtime.NONE)
-                            {
-                                mod.enabled = true;
+                            if (((MonoBehaviour)info.Instance).enabled)
                                 continue;
+
+                            if (info.Instance is Mod mod)
+                            {
+                                if (mod.options.runtimeOptions != Mod.Options.Runtime.NONE)
+                                {
+                                    mod.enabled = true;
+                                    continue;
+                                }
                             }
+
+                            // Mod disabled, required, cannot enable.
+                            player.Disconnect();
+                            NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+
+                            Plugin.Logger.LogDebug("Plugin.Required.Disabled.Kill");
+
+                            return;
                         }
 
-                        // Mod disabled, required, cannot enable.
+                        Plugin.Logger.LogDebug("Plugin.Required.Passed");
+
+                        if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
+                        {
+                            ContinueAuthentication(player);
+                        }
+                    }
+                    else
+                    {
+                        Plugin.Logger.LogDebug("Discovery.Required.Kill");
+
                         player.Disconnect();
                         NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
-
-                        return;
                     }
-
-                    if (Interlocked.Exchange(ref checkpoint, int.MaxValue) == int.MaxValue)
-                    {
-                        ContinueAuthentication(player);
-                    }
-                }
-                else
-                {
-                    player.Disconnect();
-                    NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
-                }
-            });
+                });
+            };
 
             return false;
         }
@@ -311,6 +337,7 @@ namespace AtomicFramework
 
         private static void ContinueAuthentication(INetworkPlayer player)
         {
+            Plugin.Logger.LogDebug("ContinueAuthetication");
             ulong id = (player.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
 
             Cancelable cancelable = new();
@@ -321,6 +348,9 @@ namespace AtomicFramework
                 PlayerJoined?.Invoke(id);
 
                 MethodInfo continuation = typeof(NetworkManagerNuclearOption).GetMethod("OnServerAuthenticated", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                pending.Add(player);
+
                 continuation.Invoke(NetworkManagerNuclearOption.i, [player]);
             }
             else
