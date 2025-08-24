@@ -57,10 +57,14 @@ namespace AtomicFramework
 
         protected Mod(Options options)
         {
-            if (NetworkingManager.instance != null)
-                Networking = new(Info.Metadata.GUID);
+            NetworkingManager.OnNetworkingAvail += OnNetworking;
 
             this.options = options;
+        }
+
+        private void OnNetworking(NetworkingManager _)
+        {
+            Networking = new(Info.Metadata.GUID);
         }
     }
 }

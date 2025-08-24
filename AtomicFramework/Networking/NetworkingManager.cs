@@ -34,6 +34,8 @@ namespace AtomicFramework
         /// </summary>
         public readonly Discovery discovery;
 
+        internal static event Action<NetworkingManager>? OnNetworkingAvail;
+
 #pragma warning disable CS8618
         private NetworkingManager()
 #pragma warning restore CS8618
@@ -87,6 +89,8 @@ namespace AtomicFramework
                         Plugin.Logger.LogDebug($"Player {player.PlayerName} ({player.SteamID:X}) not using framework.");
                 }
             };
+
+            OnNetworkingAvail?.Invoke(this);
         }
 
         /// <summary>
