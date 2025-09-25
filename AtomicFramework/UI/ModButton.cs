@@ -16,10 +16,15 @@ namespace AtomicFramework.UI
 
         private static void InjectMenu(Scene old, Scene next)
         {
-            if (GameManager.gameState != GameManager.GameState.Menu)
+            if (GameManager.gameState != GameState.Menu)
                 return;
 
             GameObject buttonList = GameObject.Find("MainCanvas/Prejoin menu/LeftPanel/Container/MenuButtonsPanel");
+            if (buttonList == null)
+            {
+                Plugin.Logger.LogDebug("Failed to find location for mods button");
+                return;
+            }
 
             GameObject button = GameObject.Instantiate(buttonList.transform.GetChild(0).gameObject, buttonList.transform);
             button.name = "ModButton";

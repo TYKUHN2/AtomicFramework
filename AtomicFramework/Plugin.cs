@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using UnityEngine;
 using System.Linq;
 using AtomicFramework.UI;
+using System.Reflection;
 
 #if BEP5
 using BepInEx.Bootstrap;
@@ -64,7 +65,7 @@ namespace AtomicFramework
         {
             Logger.LogInfo($"LateLoading {MyPluginInfo.PLUGIN_GUID}");
 
-            if (!SteamManager.Initialized)
+            if (!(bool)(typeof(SteamManager).GetField("s_EverInitialized", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null)))
             {
                 Logger.LogWarning("Steam is not initalized, networking will be unavailable.");
                 return;

@@ -197,9 +197,10 @@ namespace AtomicFramework
         private void MissionLoaded()
         {
             // Multiplayer and not host
-            if (GameManager.gameState == GameManager.GameState.Multiplayer && !NetworkManagerNuclearOption.i.Server.Active)
+            if (GameManager.gameState == GameState.Multiplayer && !NetworkManagerNuclearOption.i.Server.Active)
             {
-                Player[] players = [.. UnitRegistry.playerLookup.Values.Where(player => player != GameManager.LocalPlayer)];
+                GameManager.GetLocalPlayer(out BasePlayer localPlayer);
+                Player[] players = [.. UnitRegistry.playerLookup.Values.Where(player => player != localPlayer)];
                 pending = players.Length;
 
                 foreach (Player player in players)
