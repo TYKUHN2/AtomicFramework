@@ -329,9 +329,9 @@ namespace AtomicFramework
             return false;
         }
 
-        private static void ServerDisconnectCallback(INetworkPlayer conn)
+        private static void ServerDisconnectCallback(INetworkPlayer networkPlayer)
         {
-            ulong id = (conn.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
+            ulong id = (networkPlayer.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
             PlayerLeft?.Invoke(id);
         }
 

@@ -20,8 +20,8 @@ namespace AtomicFramework
         /// <summary>
         /// The fraction of packets lost in either direction on the connection.
         /// </summary>
-        public readonly float packetLoss = Math.Clamp(
-            1 - Math.Min(status.m_flConnectionQualityLocal, status.m_flConnectionQualityRemote),
+        public readonly float packetLoss = status.m_flConnectionQualityRemote == -1 ? 0 : Math.Clamp(
+            1 - status.m_flConnectionQualityRemote,
             0,
             1);
 
