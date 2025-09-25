@@ -64,7 +64,7 @@ namespace AtomicFramework
         /// Gets the list of known mods of a player.
         /// </summary>
         /// <remarks>
-        /// If the mods are not known, returns and empty array.
+        /// If the mods are not known the array will be empty.
         /// Otherwise, always contains at least AtomicFramework.
         /// </remarks>
         /// <param name="player">Player to get mods of.</param>
@@ -149,6 +149,7 @@ namespace AtomicFramework
             Plugin.Logger.LogDebug($"Discovery failed for {player}");
 
             ConnectionResolved?.Invoke(player);
+            ModsAvailable?.Invoke(player);
 
             int res = Interlocked.Decrement(ref pending);
             if (res == 0)
