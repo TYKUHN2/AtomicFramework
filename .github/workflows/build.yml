@@ -1,0 +1,79 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+# TODO: Extract common actions to reusable workflow
+
+name: Build Plugin
+
+permissions:
+    contents: read
+
+on: # TODO: When release is drafted, build, attest, and attach
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Get Latest 7zip
+      run: |
+        echo "4ca3b7c6f2f67866b92622818b58233dc70367be2f36b498eb0bdeaaa44b53f4  7z2501-linux-x64.tar.xz" > hash
+        wget https://www.7-zip.org/a/7z2501-linux-x64.tar.xz
+        sha256sum -c hash
+        tar -xf 7z2501-linux-x64.tar.xz 7zz
+        rm 7z2501-linux-x64.tar.xz
+        rm hash
+        chmod +x ./7zz
+
+    - name: Checkout Repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+    
+    - name: Prepare APT
+      run: |
+        sudo add-apt-repository multiverse
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        
+    - name: Accept Steam License
+      run: echo steam steam/question select "I AGREE" | sudo debconf-set-selections
+    
+    - name: Install SteamCMD
+      run: sudo apt-get install steamcmd
+    
+    - name: Install Nuclear Option
+      run: steamcmd +login anonymous +app_update 3930080 validate +quit
+      
+    - name: Build Bep6
+      run: dotnet build -c Release-Bep6
+      env:
+        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+    
+    - name: Build Bep5
+      run: dotnet build -c Release-Bep5
+      env:
+        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+      
+    - name: Prepare Artifact
+      run: |
+        mkdir -p "Release/BepInEx 5"
+        mkdir -p "Release/BepInEx 6"
+        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 5/AtomicFramework.dll"
+        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 6/AtomicFramework.dll"
+        ./7zz a -t7z -mx9 -mmt4 AtomicFramework.7z Release/*
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AtomicFramework.7z
+        path: AtomicFramework.7z
+        if-no-files-found: error
+        compression-level: 0 # It's already compressed
