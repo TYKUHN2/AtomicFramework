@@ -6,33 +6,33 @@
 name: Build Plugin
 
 permissions:
-    contents: read
+    contents: write
 
 on: # TODO: When release is drafted, build, attest, and attach
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+  release:
+    types: [ published ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
     
     - name: Get Latest 7zip
       run: |
         echo "4ca3b7c6f2f67866b92622818b58233dc70367be2f36b498eb0bdeaaa44b53f4  7z2501-linux-x64.tar.xz" > hash
         wget https://www.7-zip.org/a/7z2501-linux-x64.tar.xz
         sha256sum -c hash
-        tar -xf 7z2501-linux-x64.tar.xz 7zz
+        tar -xvf 7z2501-linux-x64.tar.xz 7zz
         rm 7z2501-linux-x64.tar.xz
         rm hash
         chmod +x ./7zz
-
-    - name: Checkout Repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
     
     - name: Prepare APT
       run: |
@@ -77,3 +77,10 @@ jobs:
         path: AtomicFramework.7z
         if-no-files-found: error
         compression-level: 0 # It's already compressed
+
+    - name: Add Release Artifact
+      if: ${{ github.event_name == 'release' }}
+      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836
+      with:
+        files: AtomicFramework.7z
+        fail_on_unmatched_files: true
