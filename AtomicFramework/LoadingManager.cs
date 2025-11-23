@@ -57,7 +57,7 @@ namespace AtomicFramework
         public static event Action? GameLoaded;
 
         /// <summary>
-        /// When the game's Network Manager (<code>NetworkManagerNuclearOption</code>) has been
+        /// When the game's Network Manager (NetworkManagerNuclearOption) has been
         /// initialized.
         /// </summary>
         public static event Action? NetworkReady;
@@ -69,6 +69,8 @@ namespace AtomicFramework
         /// Mirage at this point reports that the scene has been loaded, and most or all network
         /// objects created.
         /// That being said, there is no guarentee the game follows what Mirage says.
+        /// <br />
+        /// All players should be initialized at minimum.
         /// </remarks>
         public static event Action? MissionLoaded;
 
@@ -114,6 +116,7 @@ namespace AtomicFramework
                 null,
                 HookMethod(NetworkManagerPostfix)
             );
+
             harmony.Patch(
                 netManager.GetMethod("OnServerAuthenticated", BindingFlags.NonPublic | BindingFlags.Instance),
                 HookMethod(ClientAuthenticatingCallback)
@@ -207,9 +210,7 @@ namespace AtomicFramework
                 return true;
             }
 
-            Cancelable cancelable = new();
-            PrePlayerAuthenticating?.Invoke(endpoint.Connection.SteamID.m_SteamID, cancelable);
-            if (cancelable.Canceled)
+            if (PrePlayerAuthenticating?.InvokeCancelable(endpoint.Connection.SteamID.m_SteamID) == false)
             {
                 player.Disconnect();
                 NetworkingManager.instance!.Kill(endpoint.Connection.SteamID.m_SteamID);
@@ -340,10 +341,12 @@ namespace AtomicFramework
             Plugin.Logger.LogDebug("ContinueAuthetication");
             ulong id = (player.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
 
-            Cancelable cancelable = new();
-            PlayerAuthenticating?.Invoke(id, cancelable);
-
-            if (!cancelable.Canceled)
+            if (PlayerAuthenticating?.InvokeCancelable(id) == false)
+            {
+                player.Disconnect();
+                NetworkingManager.instance!.Kill(id);
+            }
+            else
             {
                 PlayerJoined?.Invoke(id);
 
@@ -353,16 +356,30 @@ namespace AtomicFramework
 
                 continuation.Invoke(NetworkManagerNuclearOption.i, [player]);
             }
-            else
-            {
-                player.Disconnect();
-                NetworkingManager.instance!.Kill(id);
-            }
         }
 
         private static void KillCallback(Callback<SteamNetConnectionStatusChangedCallback_t> ___c_onConnectionChange)
         {
             ___c_onConnectionChange.Unregister();
+        }
+
+        // true = not canceled
+        // false = canceled
+        internal static bool InvokeCancelable<T>(this Action<T, Cancelable> action, T param)
+        {
+            Cancelable cancelable = new();
+
+#pragma warning disable IDE0220
+            foreach (Action<T, Cancelable> del in action.GetInvocationList())
+            {
+                del.Invoke(param, cancelable);
+
+                if (cancelable.Canceled)
+                    return false;
+            }
+#pragma warning restore IDE0220
+
+            return true;
         }
     }
 }
