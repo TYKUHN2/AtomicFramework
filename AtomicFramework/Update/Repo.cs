@@ -65,19 +65,21 @@ namespace AtomicFramework.Update
 #else
 #error Unknown BepInEx Version
 #endif
+
             if (ourVersion)
                 File.Replace(path, path + ".download", path + ".bak");
+            else
+                File.Delete(path + ".download");
 
-            File.Delete(path + ".download");
             return ourVersion;
         }
 
         private async Task<Release?> GetLatest(Mod mod)
         {
-            Release? latest = await Github.GetLatest(mod.options.repository, false);
+            Release? latest = await Github.GetLatest(mod.options.repository, mod.Info.Metadata.GUID, false);
 
             if (latest == null || mod.Info.Metadata.Version > latest.version)
-                latest = await Github.GetLatest(mod.options.repository, true);
+                latest = await Github.GetLatest(mod.options.repository, mod.Info.Metadata.GUID, true);
 
             if (latest == null || mod.Info.Metadata.Version > latest.version)
                 return null;

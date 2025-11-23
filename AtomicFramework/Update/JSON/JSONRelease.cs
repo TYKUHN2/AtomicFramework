@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AtomicFramework
+namespace AtomicFramework.Update
 {
     [Serializable]
     internal class JSONRelease(int id, string tag_name, JSONAsset[]? assets)

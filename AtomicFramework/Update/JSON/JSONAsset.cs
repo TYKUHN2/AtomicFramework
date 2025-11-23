@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AtomicFramework
+namespace AtomicFramework.Update
 {
     [Serializable]
     internal class JSONAsset(int id, string name, string browser_download_url)
