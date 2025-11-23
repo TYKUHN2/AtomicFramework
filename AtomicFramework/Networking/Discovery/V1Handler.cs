@@ -81,7 +81,7 @@ namespace AtomicFramework
                                 {
                                     Mod.Options.Multiplayer options = mod.options.multiplayerOptions;
 
-                                    if (NetworkManagerNuclearOption.i.Server.Active) // We are host
+                                    if (NetworkingManager.IsServer()) // We are host
                                     {
                                         if (options == Mod.Options.Multiplayer.REQUIRES_ALL)
                                             required.Add(plugin.Metadata.GUID);
