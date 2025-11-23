@@ -1,3 +1,7 @@
+﻿#if DEBUG
+using AtomicFramework.Networking.Debug;
+#endif
+
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -56,6 +60,10 @@ namespace AtomicFramework
 
         internal NetworkChannel(HSteamListenSocket socket, string GUID, ushort channel)
         {
+#if DEBUG
+            TextDebug.WriteChannelStatus(GUID, channel, false);
+#endif
+
             this.socket = socket;
             this.GUID = GUID;
             this.channel = channel;
@@ -72,6 +80,10 @@ namespace AtomicFramework
         {
             if (connections.TryGetValue(player, out HSteamNetConnection conn))
             {
+#if DEBUG
+                TextDebug.WritePacket(GUID, channel, new(message, player), true);
+#endif
+
                 unsafe
                 {
                     fixed (byte* buf = message)
@@ -92,6 +104,10 @@ namespace AtomicFramework
         {
             if (connections.ContainsKey(address))
                 return;
+
+#if DEBUG
+            TextDebug.WriteConnecting(GUID, channel, address, false);
+#endif
 
             void OnPort(ushort port)
             {
@@ -142,6 +158,10 @@ namespace AtomicFramework
 
         internal void ReceiveMessage(NetworkMessage message)
         {
+#if DEBUG
+            TextDebug.WritePacket(GUID, channel, message, false);
+#endif
+
             OnMessage?.Invoke(message);
         }
 
@@ -149,6 +169,10 @@ namespace AtomicFramework
         {
             if (OnConnection?.Invoke(player) == true)
             {
+#if DEBUG
+                TextDebug.WriteConnectStatus(GUID, channel, player, false);
+#endif
+
                 connections[player] = conn;
                 return true;
             }
@@ -158,23 +182,39 @@ namespace AtomicFramework
 
         internal void NotifyConnected(ulong player, HSteamNetConnection conn)
         {
+#if DEBUG
+            TextDebug.WriteConnectStatus(GUID, channel, player, false);
+#endif
+
             OnConnected?.Invoke(player);
             connections[player] = conn;
         }
 
         internal void ReceiveDisconnect(ulong player)
         {
+#if DEBUG
+            TextDebug.WriteConnectStatus(GUID, channel, player, true);
+#endif
+
             OnDisconnect?.Invoke(player);
             connections.Remove(player);
         }
 
         internal void ReceiveFailed(ulong player, bool refused)
         {
+#if DEBUG
+            TextDebug.WriteConnecting(GUID, channel, player, true);
+#endif
+
             OnConnectionFailed?.Invoke(player, refused);
         }
 
         internal void Close()
         {
+#if DEBUG
+            TextDebug.WriteChannelStatus(GUID, channel, true);
+#endif
+
             SteamNetworkingSockets.CloseListenSocket(socket);
             NetworkingManager.instance!.NotifyClosed(socket);
 
