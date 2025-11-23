@@ -63,6 +63,11 @@ namespace AtomicFramework
         public static event Action? NetworkReady;
 
         /// <summary>
+        /// A local server is starting.
+        /// </summary>
+        public static event Action? ServerStarting;
+
+        /// <summary>
         /// When a mission has been fully loaded.
         /// </summary>
         /// <remarks>
@@ -164,6 +169,7 @@ namespace AtomicFramework
         {
             NetworkManagerNuclearOption.i.Client.Connected.AddListener(ClientConnectCallback);
             NetworkManagerNuclearOption.i.Client.Disconnected.AddListener(ClientDisconectCallback);
+            NetworkManagerNuclearOption.i.Server.Started.AddListener(() => ServerStarting?.Invoke());
 
             Plugin.Logger.LogDebug("Reached NetworkReady");
             NetworkReady?.Invoke();

@@ -113,7 +113,12 @@ namespace AtomicFramework
 
         public static bool IsServer()
         {
-            return NetworkManagerNuclearOption.i.Server.Active;
+            return GameManager.IsHeadless || NetworkManagerNuclearOption.i.Server.Active;
+        }
+
+        public static bool IsDedicatedServer()
+        {
+            return GameManager.IsHeadless;
         }
 
         public static bool IsPeer(ulong player)
