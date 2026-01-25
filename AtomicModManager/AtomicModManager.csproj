@@ -14,7 +14,6 @@
         https://nuget.bepinex.dev/v3/index.json
       </RestoreAdditionalProjectSources>
       <RootNamespace>AtomicFramework</RootNamespace>
-      <PlatformTarget>x64</PlatformTarget>
       <Nullable>enable</Nullable>
       <Authors>Tyler Kuhn</Authors>
       <Company />
@@ -55,7 +54,21 @@
       <ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj" Private="False" />
     </ItemGroup>
 
+	<ItemGroup>
+		<obj-files Include="$(BaseIntermediateOutputPath)/x64/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/*.*" />
+		<bin-files Include="$(BaseOutputPath)/x64/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/*.*" />
+	</ItemGroup>
+
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+		<Message Importance="high" Text="Microslop alert: Fixing apphost path" />
+		<Copy SourceFiles="@(obj-files)"
+			  DestinationFolder="$(BaseIntermediateOutputPath)/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+
+		<Copy SourceFiles="@(bin-files)"
+			  DestinationFolder="$(BaseOutputPath)/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		
 		<Message Importance="High" Text="Running 'dotnet publish -c $(Configuration) --no-build'" />
 		<Exec Command="dotnet publish -c $(Configuration) --no-build" StandardOutputImportance="High" />
 
