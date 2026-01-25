@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <AssemblyName>AtomicFramework</AssemblyName>
@@ -57,6 +57,10 @@
 
   <ItemGroup>
     <Compile Remove="Networking/Debug/*.cs" Condition="!$(DefineConstants.Contains('DEBUG'))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AtomicPatcher\AtomicPatcher.csproj" Private="False" />
   </ItemGroup>
 
   <ItemGroup>

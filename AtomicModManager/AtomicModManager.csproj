@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+      <OutputType>WinExe</OutputType>
+      <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+      <UseWindowsForms>true</UseWindowsForms>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <AssemblyName>AtomicModManager</AssemblyName>
+      <Product />
+      <Version>0.1.0</Version>
+      <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+      <LangVersion>13.0</LangVersion>
+      <RestoreAdditionalProjectSources>
+        https://api.nuget.org/v3/index.json;
+        https://nuget.bepinex.dev/v3/index.json
+      </RestoreAdditionalProjectSources>
+      <RootNamespace>AtomicFramework</RootNamespace>
+      <PlatformTarget>x64</PlatformTarget>
+      <Nullable>enable</Nullable>
+      <Authors>Tyler Kuhn</Authors>
+      <Company />
+      <Description>Modding framework for Nuclear Option (ModManager edition)</Description>
+      <Copyright>All Rights Reserved 2025</Copyright>
+      <NeutralLanguage>en-US</NeutralLanguage>
+      <Platforms>x64</Platforms>
+      <Configurations>Debug-Bep6;Release-Bep6;Debug-Bep5;Release-Bep5</Configurations>
+      <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+      <NoWarn></NoWarn>
+      <PublishSingleFile>true</PublishSingleFile>
+	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
+      <DefineConstants>BEP6;$(DefineConstants)</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
+      <DefineConstants>BEP5;$(DefineConstants)</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Debug-Bep6'">
+      <DebugType>portable</DebugType>
+      <DefineConstants>DEBUG;$(DefineConstants)</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+      <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+		<PackageReference Include="SemanticVersioning" Version="2.0.2" />
+        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj" Private="False" />
+    </ItemGroup>
+
+	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+		<Message Importance="High" Text="Running 'dotnet publish -c $(Configuration) --no-build'" />
+		<Exec Command="dotnet publish -c $(Configuration) --no-build" StandardOutputImportance="High" />
+
+		<Copy SourceFiles="$(PublishDir)/../$(TargetName).exe" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+	</Target>
+</Project>
