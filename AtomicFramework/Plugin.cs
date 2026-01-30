@@ -48,6 +48,7 @@ namespace AtomicFramework
                 throw new InvalidOperationException($"Reinitialization of Plugin {MyPluginInfo.PLUGIN_GUID}");
 
             LoadingManager.GameLoaded += LateLoad;
+            LoadingManager.NetworkReady += NetworkReady;
         }
 
         ~Plugin()
@@ -65,12 +66,6 @@ namespace AtomicFramework
         {
             Logger.LogInfo($"LateLoading {MyPluginInfo.PLUGIN_GUID}");
 
-            if (!(bool)(typeof(SteamManager).GetField("s_EverInitialized", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null)))
-            {
-                Logger.LogWarning("Steam is not initalized, networking will be unavailable.");
-                return;
-            }
-
             PluginInfo[] plugins = PluginsLoaded();
             string[] legacy = [.. plugins.Where(plugin => plugin.Instance is not Mod).Select(plugin => plugin.Metadata.GUID)];
             string[] modern = [.. plugins.Where(plugin => plugin.Instance is Mod).Select(plugin => plugin.Metadata.GUID)];
@@ -79,7 +74,11 @@ namespace AtomicFramework
             Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
 
             ModButton.Init();
+        }
 
+        private void NetworkReady()
+        {
+            Logger.LogDebug("Network loaded");
             gameObject.AddComponent<NetworkingManager>();
         }
 

@@ -116,8 +116,9 @@ namespace AtomicFramework
             Type thisType = typeof(LoadingManager);
 
             Type netManager = typeof(NetworkManagerNuclearOption);
+            Type steamManager = typeof(SteamManager);
             harmony.Patch(
-                netManager.GetMethod("Awake"),
+                steamManager.GetMethod("MarkInit", BindingFlags.Instance | BindingFlags.NonPublic),
                 null,
                 HookMethod(NetworkManagerPostfix)
             );
@@ -165,7 +166,7 @@ namespace AtomicFramework
             harmony.Unpatch(original, HookMethod(MainMenuPostfix).method);
         }
 
-        private static void NetworkManagerPostfix()
+        private static void NetworkManagerPostfix(NetworkManagerNuclearOption __instance)
         {
             NetworkManagerNuclearOption.i.Client.Connected.AddListener(ClientConnectCallback);
             NetworkManagerNuclearOption.i.Client.Disconnected.AddListener(ClientDisconectCallback);
