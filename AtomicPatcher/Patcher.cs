@@ -47,20 +47,33 @@ public partial class Patcher
         [TargetAssembly("BepInEx.Unity.Mono.dll")]
         private void PatchChainloader(AssemblyDefinition assembly)
         {
-            AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
-            MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
-                .Methods.First(m => m.Name == "HookBepInEx");
+            try
+            {
+                Log.LogDebug("Fething HookBepInEx");
+                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
+                MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
+                    .Methods.First(m => m.Name == "HookBepInEx");
 
-            MethodReference ourImport = assembly.MainModule.ImportReference(hookRef);
+                MethodReference ourImport = assembly.MainModule.ImportReference(hookRef);
 
-            TypeDefinition chainloader = assembly.MainModule.Types
-                .Where(t => t.IsClass && t.FullName == "BepInEx.Unity.Mono.Bootstrap.UnityChainLoader").First();
+                Log.LogDebug("Fetching UnityChainloader");
+                TypeDefinition chainloader = assembly.MainModule.Types
+                    .Where(t => t.IsClass && t.FullName == "BepInEx.Unity.Mono.Bootstrap.UnityChainloader").First();
 
-            MethodDefinition init = chainloader.Methods.Where(m => m.Name == "Initialize").First();
-            Instruction first = init.Body.Instructions[0];
-            ILProcessor proc = init.Body.GetILProcessor();
+                Log.LogDebug("Patching Init");
+                MethodDefinition init = chainloader.Methods.Where(m => m.Name == "Initialize").First();
+                Instruction first = init.Body.Instructions[0];
+                ILProcessor proc = init.Body.GetILProcessor();
 
-            proc.InsertBefore(first, Instruction.Create(OpCodes.Call, ourImport));
+                proc.InsertBefore(first, proc.Create(OpCodes.Call, ourImport));
+            }
+            catch (Exception e)
+            {
+                Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e.ToString()}");
+
+                while (true)
+                    Process.GetCurrentProcess().WaitForExit();
+            }
         }
     }
 #endif
@@ -82,35 +95,45 @@ public partial class Patcher
 
         private void Impl()
         {
-            Log.LogInfo("AtomicFramework Patcher Initialized");
-
-            string filename;
-            switch (Environment.OSVersion.Platform)
+            try
             {
-                case PlatformID.Win32NT:
-                    filename = "AtomicModManager.exe";
-                    break;
-                default:
-                    Log.LogWarning("Skipping mod manager, unsupported OS");
-                    return;
+                Log.LogInfo("AtomicFramework Patcher Initialized");
+
+                string filename;
+                switch (Environment.OSVersion.Platform)
+                {
+                    case PlatformID.Win32NT:
+                        filename = "AtomicModManager.exe";
+                        break;
+                    default:
+                        Log.LogWarning("Skipping mod manager, unsupported OS");
+                        return;
+                }
+
+                Process newProc = new();
+                newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
+                newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
+                newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
+                newProc.StartInfo.UseShellExecute = false;
+                newProc.StartInfo.RedirectStandardInput = true;
+                newProc.StartInfo.RedirectStandardOutput = true;
+                newProc.Start();
+
+                ModManager manager = new(newProc.StandardOutput, newProc.StandardInput);
+
+                NATIVE_DISABLED = manager.ReadPlugins();
+                ATOMIC_DISABLED = manager.ReadPlugins();
+
+                if (NATIVE_DISABLED.Contains("AtomicFramework"))
+                    Log.LogWarning("WARNING: AtomicFramework must be loaded to function properly. It will not be awoken.");
             }
+            catch (Exception e)
+            {
+                Log.LogError($"Uncaught exception in Patcher.Impl: {e.ToString()}");
 
-            Process newProc = new();
-            newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
-            newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
-            newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
-            newProc.StartInfo.UseShellExecute = false;
-            newProc.StartInfo.RedirectStandardInput = true;
-            newProc.StartInfo.RedirectStandardOutput = true;
-            newProc.Start();
-
-            ModManager manager = new(newProc.StandardInput, newProc.StandardOutput);
-
-            NATIVE_DISABLED = manager.ReadPlugins();
-            ATOMIC_DISABLED = manager.ReadPlugins();
-
-            if (NATIVE_DISABLED.Contains("AtomicFramework"))
-                Log.LogWarning("WARNING: AtomicFramework must be loaded to function properly. It will not be awoken.");
+                while (true)
+                    Process.GetCurrentProcess().WaitForExit();
+            }
         }
     }
 }

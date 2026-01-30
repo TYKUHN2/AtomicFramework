@@ -20,7 +20,7 @@ namespace AtomicFramework.Communication
             output = new(outStream);
         }
 
-        public ModManager(StreamWriter input, StreamReader output)
+        public ModManager(StreamReader input, StreamWriter output)
         {
             inStream = input.BaseStream;
             outStream = output.BaseStream;
