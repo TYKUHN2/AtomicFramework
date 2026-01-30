@@ -42,7 +42,11 @@
   </ItemGroup>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
+		<ItemGroup>
+			<OutputFiles Include="$(TargetPath);$(TargetDir)/$(TargetName).pdb" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
 			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>

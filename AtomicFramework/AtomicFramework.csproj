@@ -132,7 +132,11 @@ namespace $(RootNamespace)
     </Target>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="../bin/$(Configuration)/BepInEx/plugins/" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<ItemGroup>
+			<OutputFiles Include="$(TargetPath);$(TargetDir)/$(TargetName).pdb" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/plugins/" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>
     

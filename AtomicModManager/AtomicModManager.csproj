@@ -60,10 +60,14 @@
 	</ItemGroup>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+		<ItemGroup>
+			<OutputFiles Include="$(PublishDir)/$(TargetName).exe;$(PublishDir)/$(TargetName).pdb" />
+		</ItemGroup>
+
 		<Message Importance="High" Text="Running 'dotnet publish -c $(Configuration) --no-build'" />
 		<Exec Command="dotnet publish -c $(Configuration) --no-build -p:Platform=x64 " StandardOutputImportance="High" />
 
-		<Copy SourceFiles="$(PublishDir)/../$(TargetName).exe" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
 			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>
