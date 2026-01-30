@@ -49,7 +49,7 @@ public partial class Patcher
         {
             try
             {
-                Log.LogDebug("Fething HookBepInEx");
+                Log.LogDebug("Fetching HookBepInEx");
                 AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
                 MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
                     .Methods.First(m => m.Name == "HookBepInEx");
@@ -123,6 +123,12 @@ public partial class Patcher
 
                 NATIVE_DISABLED = manager.ReadPlugins();
                 ATOMIC_DISABLED = manager.ReadPlugins();
+
+                if (NATIVE_DISABLED.Length > 0)
+                    Log.LogInfo($"Blocking {String.Join(", ", NATIVE_DISABLED)}");
+
+                if (ATOMIC_DISABLED.Length > 0)
+                    Log.LogInfo($"Disabling {String.Join(", ", ATOMIC_DISABLED)}");
 
                 if (NATIVE_DISABLED.Contains("AtomicFramework"))
                     Log.LogWarning("WARNING: AtomicFramework must be loaded to function properly. It will not be awoken.");

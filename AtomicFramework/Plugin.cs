@@ -70,8 +70,11 @@ namespace AtomicFramework
             string[] legacy = [.. plugins.Where(plugin => plugin.Instance is not Mod).Select(plugin => plugin.Metadata.GUID)];
             string[] modern = [.. plugins.Where(plugin => plugin.Instance is Mod).Select(plugin => plugin.Metadata.GUID)];
 
-            Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
-            Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
+            if (legacy.Length > 0)
+                Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
+
+            if (modern.Length > 0)
+                Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
 
             ModButton.Init();
         }
