@@ -35,20 +35,19 @@ namespace AtomicFramework
 
                 Plugin[] disabled = window.GetDisabled();
 
-                Communication.ModManager comm = new();
+                using (Communication.ModManager comm = new())
+                {
+                    string[] NATIVE_DISABLE = [.. disabled.Where(p => p.atomicVersion == null).Select(p => p.guid)];
+                    string[] ATOMIC_DISABLE = [.. disabled.Where(p => p.atomicVersion != null).Select(p => p.guid)];
 
-                string[] NATIVE_DISABLE = [.. disabled.Where(p => p.atomicVersion == null).Select(p => p.guid)];
-                string[] ATOMIC_DISABLE = [.. disabled.Where(p => p.atomicVersion != null).Select(p => p.guid)];
+                    Console.WriteLine("Dump");
+                    Console.Out.WriteLine(string.Join(", ", NATIVE_DISABLE));
+                    Console.Out.WriteLine(string.Join(", ", ATOMIC_DISABLE));
+                    Console.Out.Flush();
 
-                Console.WriteLine("Dump");
-                Console.Out.WriteLine(string.Join(", ", NATIVE_DISABLE));
-                Console.Out.WriteLine(string.Join(", ", ATOMIC_DISABLE));
-                Console.Out.Flush();
-
-                comm.WritePlugins(NATIVE_DISABLE);
-                comm.WritePlugins(ATOMIC_DISABLE);
-
-                while (true) { }
+                    comm.WritePlugins(NATIVE_DISABLE);
+                    comm.WritePlugins(ATOMIC_DISABLE);
+                }
             }
             catch (Exception ex)
             {
