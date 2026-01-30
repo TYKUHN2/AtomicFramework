@@ -51,21 +51,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj" Private="False" />
+		<ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</ProjectReference>
     </ItemGroup>
 
-	<ItemGroup>
-		<obj-files Include="$(BaseIntermediateOutputPath)/x64/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/*.*" />
-		<bin-files Include="$(BaseOutputPath)/x64/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/*.*" />
-	</ItemGroup>
-
-	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+	<Target Name="CollectFiles" AfterTargets="PostBuildEvent" Condition="$(_IsPublishing) != true">
 		<ItemGroup>
 			<OutputFiles Include="$(PublishDir)/$(TargetName).exe;$(PublishDir)/$(TargetName).pdb" />
 		</ItemGroup>
 
-		<Message Importance="High" Text="Running 'dotnet publish -c $(Configuration) --no-build'" />
-		<Exec Command="dotnet publish -c $(Configuration) --no-build -p:Platform=x64 " StandardOutputImportance="High" />
+		<Message Importance="High" Text="Running dotnet publish" />
+		<Exec Command="dotnet publish -c $(Configuration) -f $(TargetFramework) -r $(RuntimeIdentifier) --no-self-contained --no-build -p:Platform=x64 " StandardOutputImportance="High" />
 
 		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
 			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
