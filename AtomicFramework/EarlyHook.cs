@@ -1,10 +1,12 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using BepInEx.Unity.Mono;
 using BepInEx.Unity.Mono.Bootstrap;
 using HarmonyLib;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -14,22 +16,22 @@ namespace AtomicFramework
 {
     internal static class EarlyHook
     {
+        private static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource("AtomicFramework.EarlyHook");
+
         internal static void HookBepInEx()
         {
-            ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource("AtomicFramework.EarlyHook");
-
             Harmony h = new("xyz.tyknet.NuclearOption.Early");
 
             try
             {
-                Log.LogDebug("EARLYHOOK: HOOKING TOPLUGININFO");
+                Log.LogDebug("HOOKING DISCOVERPLUGINS");
                 h.Patch(typeof(BaseChainloader<BaseUnityPlugin>)
-                    .GetMethod("ToPluginInfo"),
+                    .GetMethod("DiscoverPlugins", BindingFlags.Instance | BindingFlags.NonPublic),
                     null,
                     ToHarmony(MutateList)
                     );
 
-                Log.LogDebug("EARLYHOOK: HOOKING LOADPLUGIN");
+                Log.LogDebug("HOOKING LOADPLUGIN");
                 h.Patch(typeof(UnityChainloader).GetMethod("LoadPlugin"),
                     null,
                     ToHarmony(PostAdd)
@@ -47,18 +49,18 @@ namespace AtomicFramework
 
         private static bool ShouldLoad(PluginInfo plugin)
         {
-            return !Patcher.NATIVE_DISABLED.Contains(plugin.Metadata.GUID);
+            return !(Patcher.NATIVE_DISABLED.Contains(plugin.Metadata.GUID) || Patcher.ATOMIC_DISABLED.Contains(plugin.Metadata.GUID));
         }
 
-        private static void PostAdd(PluginInfo pluginInfo)
+        private static void PostAdd(PluginInfo pluginInfo, BaseUnityPlugin __result)
         {
             if (Patcher.ATOMIC_DISABLED.Contains(pluginInfo.Metadata.GUID))
-                (pluginInfo.Instance as Behaviour)!.enabled = false;
+                __result.enabled = false;
         }
 
-        private static PluginInfo? MutateList(PluginInfo __result)
+        private static IList<PluginInfo> MutateList(IList<PluginInfo> __result)
         {
-            return __result != null && ShouldLoad(__result) ? __result : null;
+            return [.. __result.Where(ShouldLoad)];
         }
 
         private static HarmonyMethod ToHarmony(Delegate method)
