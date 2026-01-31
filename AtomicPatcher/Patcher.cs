@@ -1,7 +1,5 @@
-﻿#if BEP6
-using AtomicFramework.Communication;
+﻿using AtomicFramework.Communication;
 using BepInEx;
-using BepInEx.Preloader.Core.Patching;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System;
@@ -9,6 +7,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
+#if BEP6
+using BepInEx.Preloader.Core.Patching;
+#else
+using System.Collections.Generic;
+using BepInEx.Logging;
 #endif
 
 [assembly: InternalsVisibleTo("BepInEx.Unity.Mono")]
@@ -17,19 +21,53 @@ namespace AtomicFramework
 {
 
 #if BEP5
-public partial class Patcher
+    public partial class Patcher
     {
+        private static readonly ManualLogSource Log = Logger.CreateLogSource(MyPluginInfo.PLUGIN_NAME);
+
         public static IEnumerable<string> TargetDLLs
         {
             get
             {
-                return ["UnityEngine.CoreModule.dll"];
+                return ["BepInEx.dll"];
             }
+        }
+
+        public static void Initialize()
+        {
+            Patcher impl = new();
+            impl.Impl();
         }
 
         public static void Patch(AssemblyDefinition assembly)
         {
-            Impl();
+            try
+            {
+                Log.LogDebug("Fetching HookBepInEx");
+                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
+                MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
+                    .Methods.First(m => m.Name == "HookBepInEx");
+
+                MethodReference ourImport = assembly.MainModule.ImportReference(hookRef);
+
+                Log.LogDebug("Fetching Chainloader");
+                TypeDefinition chainloader = assembly.MainModule.Types
+                    .Where(t => t.IsClass && t.FullName == "BepInEx.Bootstrap.Chainloader").First();
+
+                Log.LogDebug("Patching Init");
+                MethodDefinition init = chainloader.Methods.Where(m => m.Name == "Initialize").First();
+                Instruction first = init.Body.Instructions[0];
+                ILProcessor proc = init.Body.GetILProcessor();
+
+                proc.InsertBefore(first, proc.Create(OpCodes.Call, ourImport));
+            }
+            catch (Exception e)
+            {
+                Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e}");
+
+                while (true)
+                    Process.GetCurrentProcess().WaitForExit();
+            }
         }
     }
 #endif
@@ -69,7 +107,7 @@ public partial class Patcher
             }
             catch (Exception e)
             {
-                Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e.ToString()}");
+                Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e}");
 
                 while (true)
                     Process.GetCurrentProcess().WaitForExit();
@@ -135,7 +173,7 @@ public partial class Patcher
             }
             catch (Exception e)
             {
-                Log.LogError($"Uncaught exception in Patcher.Impl: {e.ToString()}");
+                Log.LogError($"Uncaught exception in Patcher.Impl: {e}");
 
                 while (true)
                     Process.GetCurrentProcess().WaitForExit();
