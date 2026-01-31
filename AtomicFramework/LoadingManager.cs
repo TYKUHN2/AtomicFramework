@@ -115,7 +115,7 @@ namespace AtomicFramework
         {
             Type thisType = typeof(LoadingManager);
 
-            Type netManager = typeof(NetworkManagerNuclearOption);
+            Plugin.Logger.LogDebug("Patching SteamManager");
             Type steamManager = typeof(SteamManager);
             harmony.Patch(
                 steamManager.GetMethod("MarkInit", BindingFlags.Instance | BindingFlags.NonPublic),
@@ -123,6 +123,8 @@ namespace AtomicFramework
                 HookMethod(NetworkManagerPostfix)
             );
 
+            Plugin.Logger.LogDebug("Patching NetworkManager");
+            Type netManager = typeof(NetworkManagerNuclearOption);
             harmony.Patch(
                 netManager.GetMethod("OnServerAuthenticated", BindingFlags.NonPublic | BindingFlags.Instance),
                 HookMethod(ClientAuthenticatingCallback)
@@ -133,21 +135,24 @@ namespace AtomicFramework
                 postfix: HookMethod(ServerDisconnectCallback)
             );
 
+            Plugin.Logger.LogDebug("Patching MainMenu");
             Type mainMenu = typeof(MainMenu);
             harmony.Patch(
                 mainMenu.GetMethod("Start", BindingFlags.NonPublic | BindingFlags.Instance),
                 postfix: HookMethod(MainMenuPostfix)
             );
 
+            Plugin.Logger.LogDebug("Patching Server");
             Type server = typeof(Server);
             harmony.Patch(
                 server.GetConstructors()[0],
                 postfix: HookMethod(KillCallback)
                 );
 
+            Plugin.Logger.LogDebug("Patching Client");
             Type client = typeof(Client);
             harmony.Patch(
-                client.GetMethod("ConnectAsync", BindingFlags.NonPublic | BindingFlags.Instance),
+                client.GetMethod("Connect"),
                 postfix: HookMethod(KillCallback)
                 );
         }
@@ -211,27 +216,27 @@ namespace AtomicFramework
             }
 
             Plugin.Logger.LogDebug("ClientAutheticatingCallback");
-            if (player.Address is not SteamEndPoint endpoint)
+            if (player.ConnectionHandle is not SteamConnection conn)
             {
                 Plugin.Logger.LogWarning("Non-Steam player detected. Cannot validate.");
                 return true;
             }
 
-            if (PrePlayerAuthenticating?.InvokeCancelable(endpoint.Connection.SteamID.m_SteamID) == false)
+            if (PrePlayerAuthenticating?.InvokeCancelable(conn.SteamID.m_SteamID) == false)
             {
                 player.Disconnect();
-                NetworkingManager.instance!.Kill(endpoint.Connection.SteamID.m_SteamID);
+                NetworkingManager.instance!.Kill(conn.SteamID.m_SteamID);
                 return false;
             }
 
-            NetworkingManager.instance!.discovery.ConnectTo(endpoint.Connection.SteamID.m_SteamID);
+            NetworkingManager.instance!.discovery.ConnectTo(conn.SteamID.m_SteamID);
 
             int checkpoint = 0;
 
             void Subscriber(ulong iplayer)
             {
                 Plugin.Logger.LogDebug("Subscriber");
-                if (iplayer == endpoint.Connection.SteamID.m_SteamID)
+                if (iplayer == conn.SteamID.m_SteamID)
                 {
                     NetworkingManager.instance!.discovery.ModsAvailable -= Subscriber;
 
@@ -263,7 +268,7 @@ namespace AtomicFramework
 
                         // Cannot disable and is unavailable. Cannot join.
                         player.Disconnect();
-                        NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
 
                         Plugin.Logger.LogDebug("Discovery.Subscriber.Kill");
 
@@ -281,12 +286,12 @@ namespace AtomicFramework
 
             NetworkingManager.instance!.discovery.ConnectionResolved += resolve_for =>
             {
-                if (resolve_for != endpoint.Connection.SteamID.m_SteamID)
+                if (resolve_for != conn.SteamID.m_SteamID)
                     return;
 
                 NetworkingManager.instance!.discovery.ModsAvailable += Subscriber;
 
-                NetworkingManager.instance!.discovery.GetRequired(endpoint.Connection.SteamID.m_SteamID, required =>
+                NetworkingManager.instance!.discovery.GetRequired(conn.SteamID.m_SteamID, required =>
                 {
                     Plugin.Logger.LogDebug("GetRequired");
                     PluginInfo[] loaded = [.. Plugin.Instance.PluginsLoaded()];
@@ -310,7 +315,7 @@ namespace AtomicFramework
 
                             // Mod disabled, required, cannot enable.
                             player.Disconnect();
-                            NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+                            NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
 
                             Plugin.Logger.LogDebug("Plugin.Required.Disabled.Kill");
 
@@ -329,7 +334,7 @@ namespace AtomicFramework
                         Plugin.Logger.LogDebug("Discovery.Required.Kill");
 
                         player.Disconnect();
-                        NetworkingManager.instance.Kill(endpoint.Connection.SteamID.m_SteamID);
+                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
                     }
                 });
             };
@@ -339,14 +344,14 @@ namespace AtomicFramework
 
         private static void ServerDisconnectCallback(INetworkPlayer networkPlayer)
         {
-            ulong id = (networkPlayer.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
+            ulong id = (networkPlayer.ConnectionHandle as SteamConnection)?.SteamID.m_SteamID ?? 0;
             PlayerLeft?.Invoke(id);
         }
 
         private static void ContinueAuthentication(INetworkPlayer player)
         {
             Plugin.Logger.LogDebug("ContinueAuthetication");
-            ulong id = (player.Address as SteamEndPoint)?.Connection?.SteamID.m_SteamID ?? 0;
+            ulong id = (player.ConnectionHandle as SteamConnection)?.SteamID.m_SteamID ?? 0;
 
             if (PlayerAuthenticating?.InvokeCancelable(id) == false)
             {
