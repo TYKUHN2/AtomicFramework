@@ -1,70 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-      <OutputType>WinExe</OutputType>
-      <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
-      <UseWindowsForms>true</UseWindowsForms>
-      <ImplicitUsings>enable</ImplicitUsings>
-      <AssemblyName>AtomicModManager</AssemblyName>
-      <Product />
-      <Version>0.1.0</Version>
-      <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-      <LangVersion>13.0</LangVersion>
-      <RestoreAdditionalProjectSources>
-        https://api.nuget.org/v3/index.json;
-        https://nuget.bepinex.dev/v3/index.json
-      </RestoreAdditionalProjectSources>
-      <RootNamespace>AtomicFramework</RootNamespace>
-      <Nullable>enable</Nullable>
-      <Authors>Tyler Kuhn</Authors>
-      <Company />
-      <Description>Modding framework for Nuclear Option (ModManager edition)</Description>
-      <Copyright>All Rights Reserved 2025</Copyright>
-      <NeutralLanguage>en-US</NeutralLanguage>
-      <Platforms>x64</Platforms>
-      <Configurations>Debug-Bep6;Release-Bep6;Debug-Bep5;Release-Bep5</Configurations>
-      <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-      <NoWarn></NoWarn>
-      <PublishSingleFile>true</PublishSingleFile>
-	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    </PropertyGroup>
+	<Import Project="../Generic-Template.targets" />
+	
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>AtomicModManager</AssemblyName>
+		<Configurations>Release;Debug</Configurations>
+		<PublishSingleFile>true</PublishSingleFile>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
-      <DefineConstants>BEP6;$(DefineConstants)</DefineConstants>
-    </PropertyGroup>
+	<PropertyGroup Condition="$(Configuration) == 'Debug'">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
-      <DefineConstants>BEP5;$(DefineConstants)</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Debug-Bep6'">
-      <DebugType>portable</DebugType>
-      <DefineConstants>DEBUG;$(DefineConstants)</DefineConstants>
-    </PropertyGroup>
-
-    <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-      <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
-    </ItemGroup>
-
-    <ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="SemanticVersioning" Version="2.0.2" />
-        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
-    </ItemGroup>
+		<PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
+	</ItemGroup>
 
-    <ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj">
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 		</ProjectReference>
-    </ItemGroup>
+	</ItemGroup>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent" Condition="$(_IsPublishing) != true">
 		<ItemGroup>
-			<OutputFiles Include="$(PublishDir)/$(TargetName).exe;$(PublishDir)/$(TargetName).pdb" />
+			<OutputFiles Include="$(PublishDir)/$(TargetName).exe" />
+			<OutputFiles Condition="$(DebugType) != 'none'" Include="$(PublishDir)/$(TargetName).pdb" />
 		</ItemGroup>
+		<PropertyGroup>
+			<Prefix>../bin/$(Configuration)</Prefix>
+			<Prefix2>BepInEx/patchers/AtomicFramework/</Prefix2>
+		</PropertyGroup>
 
 		<Message Importance="High" Text="Running dotnet publish" />
 		<Exec Command="dotnet publish -c $(Configuration) -f $(TargetFramework) -r $(RuntimeIdentifier) --no-self-contained --no-build -p:Platform=x64 " StandardOutputImportance="High" />
 
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
-			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
+				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
+				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>

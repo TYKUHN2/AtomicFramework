@@ -1,0 +1,72 @@
+<Project>
+	<Import Project="Generic-Template.targets" />
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Configurations>Release-Bep6;Release-Bep5;Debug-Bep6;Debug-Bep5</Configurations>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
+		<DefineConstants>BEP6;$(DefineConstants)</DefineConstants>
+		<BepVersion>6</BepVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
+		<DefineConstants>BEP5;$(DefineConstants)</DefineConstants>
+		<BepVersion>5</BepVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8" ExcludeAssets="runtime" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(BepVersion) == '6'">
+		<PackageReference Condition="$(PluginType) == 'plugin'" Include="BepInEx.Unity.Mono" Version="6.0.0-be.732" ExcludeAssets="runtime" />
+		<PackageReference Condition="$(PluginType) == 'patcher'" Include="BepInEx.Unity.Mono.Preloader" Version="6.0.0-be.732" ExcludeAssets="runtime" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(BepVersion) == '5'">
+		<PackageReference Include="BepInEx.Core" Version="5.4.21" ExcludeAssets="runtime" />
+	</ItemGroup>
+
+	<Target Name="VerifyProject" BeforeTargets="BeforeCompile">
+		<Error Condition="$(PluginType) != 'plugin' And $(PluginType) != 'patcher'" Text="PluginType must be set to plugin or patcher" />
+	</Target>
+
+	<Target Name="AddGeneratedFile" BeforeTargets="BeforeCompile;CoreCompile" Inputs="$(MSBuildAllProjects)" Outputs="$(IntermediateOutputPath)GeneratedFile.cs">
+		<PropertyGroup>
+			<GeneratedText>
+				<![CDATA[
+namespace $(RootNamespace)
+{
+	internal static class MyPluginInfo
+	{
+		public const string PLUGIN_GUID = "$(AssemblyName)"%3B
+		public const string PLUGIN_NAME = "$(Product)"%3B
+		public const string PLUGIN_VERSION = "$(Version)"%3B
+	}
+}
+    ]]>
+			</GeneratedText>
+			<GeneratedFilePath>$(IntermediateOutputPath)MyPluginInfo.cs</GeneratedFilePath>
+		</PropertyGroup>
+		<ItemGroup>
+			<Compile Include="$(GeneratedFilePath)" />
+			<FileWrites Include="$(GeneratedFilePath)" />
+		</ItemGroup>
+		<WriteLinesToFile Lines="$(GeneratedText)" File="$(GeneratedFilePath)" WriteOnlyWhenDifferent="true" Overwrite="true" />
+	</Target>
+
+	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+		<ItemGroup>
+			<OutputFiles Include="$(TargetPath)" />
+			<OutputFiles Condition="$(DebugType) != 'none'" Include="$(TargetDir)/$(TargetName).pdb" />
+		</ItemGroup>
+		<PropertyGroup>
+			<Prefix>../bin/$(Configuration)/BepInEx/$(PluginType)s/AtomicFramework/</Prefix>
+		</PropertyGroup>
+
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)"
+				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+	</Target>
+</Project>

@@ -1,52 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>AtomicUtilities</AssemblyName>
-    <Product />
-    <Version>0.1.0</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>13.0</LangVersion>
-    <RestoreAdditionalProjectSources>
-      https://api.nuget.org/v3/index.json;
-      https://nuget.bepinex.dev/v3/index.json
-    </RestoreAdditionalProjectSources>
-    <RootNamespace>AtomicFramework</RootNamespace>
-    <PlatformTarget>x64</PlatformTarget>
-    <Nullable>enable</Nullable>
-    <Authors>Tyler Kuhn</Authors>
-    <Company />
-    <Description>Modding framework for Nuclear Option</Description>
-    <Copyright>All Rights Reserved 2025</Copyright>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <Platforms>x64</Platforms>
-    <Configurations>Debug-Bep6;Release-Bep6;Debug-Bep5;Release-Bep5</Configurations>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <NoWarn>BepInEx001;BepInEx002;IDE1006;IDE0130</NoWarn>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep6' Or '$(Configuration)'=='Release-Bep6'">
-    <DefineConstants>BEP6;$(DefineConstants)</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Release-Bep5'">
-    <DefineConstants>BEP5;$(DefineConstants)</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug-Bep5' Or '$(Configuration)'=='Debug-Bep6'">
-    <DebugType>portable</DebugType>
-    <DefineConstants>DEBUG;$(DefineConstants)</DefineConstants>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
-  </ItemGroup>
+	<Import Project="../Generic-Template.targets" />
+	
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<AssemblyName>AtomicUtilities</AssemblyName>
+		<Configurations>Release;Debug</Configurations>
+	</PropertyGroup>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
 		<ItemGroup>
-			<OutputFiles Include="$(TargetPath);$(TargetDir)/$(TargetName).pdb" />
+			<OutputFiles Include="$(TargetPath)" />
+			<OutputFiles Condition="$(DebugType) != 'none'" Include="$(TargetDir)/$(TargetName).pdb" />
 		</ItemGroup>
+		<PropertyGroup>
+			<Prefix>../bin/$(Configuration)</Prefix>
+			<Prefix2>BepInEx/patchers/AtomicFramework/</Prefix2>
+		</PropertyGroup>
 
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="../bin/$(Configuration)/BepInEx/patchers/AtomicFramework"
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
 			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>
