@@ -28,7 +28,7 @@ jobs:
       id: steamcmd
       run: |
         winget install -e --id Valve.SteamCMD
-        echo "steamcmd=$(Split-Path $(Get-Command steamcmd).Source)" >> $GITHUB_OUTPUT
+        echo "STEAMCMD=$(Split-Path $(Get-Command steamcmd).Source)" >> $GITHUB_ENV
     
     - name: Install Nuclear Option
       id: noinstall
@@ -41,17 +41,17 @@ jobs:
       
     - name: Dump SteamCMD Logs
       if: ${{ failure() && steps.noinstall2.conclusion == 'failure' }}
-      run: cat /home/runner/.local/share/Steam/logs/*
+      run: cat $env:STEAMCMD/logs/*
       
     - name: Build Bep6
       run: dotnet build -c Release-Bep6
       env:
-        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+        NUCLEAR_OPTION_REFERENCES: ${{ env.STEAMCMD }}/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
     
     - name: Build Bep5
       run: dotnet build -c Release-Bep5
       env:
-        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+        NUCLEAR_OPTION_REFERENCES: ${{ env.STEAMCMD }}/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
       
     - name: Test
       run: dotnet test --no-build --verbosity normal
