@@ -50,8 +50,13 @@ jobs:
       id: noinstall
       run: steamcmd +login anonymous +app_update 3930080 validate +quit
       
-    - name: Dump SteamCMD Logs
+    - name: Try Again
       if: ${{ failure() && steps.noinstall.conclusion == 'failure' }}
+      id: noinstall2
+      run: steamcmd +login anonymous +app_update 3930080 validate +quit
+      
+    - name: Dump SteamCMD Logs
+      if: ${{ failure() && steps.noinstall2.conclusion == 'failure' }}
       run: cat /home/runner/.local/share/Steam/logs/*
       
     - name: Build Bep6
