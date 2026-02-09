@@ -27,7 +27,7 @@ jobs:
     - name: Install SteamCMD
       id: steamcmd
       run: |
-        winget install -e --id Valve.SteamCMD
+        winget install --accept-source-agreements -e --id Valve.SteamCMD
         echo "STEAMCMD=$(Split-Path $(Get-Command steamcmd).Source)" >> $GITHUB_ENV
     
     - name: Install Nuclear Option
