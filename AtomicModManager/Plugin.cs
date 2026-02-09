@@ -34,8 +34,9 @@ namespace AtomicFramework
             this.version = version;
         }
 
-        internal Plugin(Type basePlugin, Assembly plugin)
+        internal Plugin(Assembly plugin)
         {
+            Console.WriteLine($"Processing {plugin.FullName}");
             AssemblyName[] refs = [.. plugin.GetReferencedAssemblies().Where(n => n.Name?.Contains("BepInEx") ?? false)];
 
             if (refs.Length == 0)
@@ -63,32 +64,62 @@ namespace AtomicFramework
 
             Type[] entries = [.. plugin.GetTypes().Where(t =>
             {
-                if (!t.IsClass)
-                    return false;
+                try {
 
-                if (t.IsAbstract)
-                    return false;
+                    if (!t.IsClass)
+                        return false;
 
-                return t.IsSubclassOf(basePlugin);
+                    if (t.IsAbstract)
+                        return false;
+
+                    return IsPlugin(t);
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.Error.WriteLine($"Exception testing for plugin with {t.FullName}");
+
+                    return false;
+                }
             })];
 
             if (entries.Length == 1)
             {
                 Type cur = entries[0];
                 List<CustomAttributeData> attrs = [];
+                CustomAttributeData? pluginAttr = null;
 
-                while (!cur.FullName!.StartsWith("BepInEx") && !cur.FullName.EndsWith("BaseUnityPlugin"))
+                while (!cur.FullName!.StartsWith("BepInEx"))
                 {
+                    Console.Out.WriteLine($"Searching attributes of {cur.FullName}");
                     attrs.AddRange(cur.CustomAttributes);
+
+                    foreach (CustomAttributeData attr in cur.CustomAttributes)
+                    {
+                        try
+                        {
+                            if (attr.AttributeType.Name == "BepInPlugin")
+                                pluginAttr = attr;
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            Console.Error.WriteLine($"Error extracting attribute from {cur.FullName}");
+                        }
+                    }
+
                     cur = cur.BaseType!;
                 }
 
-                CustomAttributeData? pluginAttr = attrs.FirstOrDefault(a => a.AttributeType.Name == "BepInPlugin");
                 if (pluginAttr == null)
                 {
-                    display_name = "Error";
+                    display_name = plugin.GetName().Name!;
                     guid = "Error";
                     version = new(0, 0);
+
+                    dependencies = [];
+
+                    Console.Out.WriteLine($"Class {entries[0].FullName} is a plugin or plugin derivative but we cannot extract the BepInPlugin attribute.");
+
+                    return;
                 }
                 else
                 {
@@ -124,17 +155,25 @@ namespace AtomicFramework
                 }).Where(d => d.guid != "AtomicFramework")];
             }
             else
-            {
-                Console.Error.WriteLine($"With {basePlugin.FullName}");
-                foreach (Type type in plugin.GetTypes())
-                {
-                    if (type.IsClass && !type.IsAbstract)
-                        Console.Error.WriteLine($"Tried {type.FullName}");
-                }
-                    
-
                 throw new ArgumentException($"Plugin {plugin.GetName().Name} missing BaseUnityPlugin");
+        }
+
+        private static bool IsPlugin(Type test)
+        {
+            Type? cur = test.BaseType;
+            while (cur != null)
+            {
+                if (cur.FullName!.StartsWith("System") || cur.FullName.StartsWith("Unity") ||
+                    cur.FullName.StartsWith("Mono"))
+                    return false;
+
+                if (cur.FullName == "BepInEx.Unity.Mono.BaseUnityPlugin" || cur.FullName == "BepInEx.BaseUnityPlugin")
+                    return true;
+
+                cur = cur.BaseType;
             }
+
+            return false;
         }
     }
 }

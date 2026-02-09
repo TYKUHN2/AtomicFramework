@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AtomicFramework
@@ -66,7 +66,15 @@ namespace AtomicFramework
             }
 
             Version bepVersion = bepInEx.GetName().Version ?? (bepInEx.GetName().Name == "BepInEx.Unity.Mono" ? new(6, 0) : new(5, 0));
-            Plugin[] output = [new(bepVersion, "BepInEx", "BepInEx", bepVersion), .. plugins.Select(p => new Plugin(basePlugin, p))];
+            Plugin[] output = [new(bepVersion, "BepInEx", "BepInEx", bepVersion), .. plugins.Select(p => {
+                try {
+                    return new Plugin(p);
+                }
+                catch (ArgumentException)
+                {
+                    return null;
+                }
+            }).OfType<Plugin>()];
 
             ResolveDependencies(output);
 
