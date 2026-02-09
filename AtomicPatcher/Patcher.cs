@@ -138,10 +138,28 @@ namespace AtomicFramework
                 Log.LogInfo("AtomicFramework Patcher Initialized");
 
                 string filename;
+                string? arguments = null;
+
                 switch (Environment.OSVersion.Platform)
                 {
                     case PlatformID.Win32NT:
                         filename = "AtomicModManager.exe";
+                        break;
+                    case PlatformID.Unix:
+                        string? wine = GetWine();
+                        if (wine != null)
+                        {
+                            filename = wine;
+                            arguments = "AtomicModManager.exe";
+                        }
+                        else
+                        {
+                            Log.LogWarning("Couldn't find Wine, skipping mod manager.");
+                            return;
+                        }
+
+                        Log.LogWarning("Attempted to run Wine, this feature is untested.");
+
                         break;
                     default:
                         Log.LogWarning("Skipping mod manager, unsupported OS");
@@ -150,6 +168,10 @@ namespace AtomicFramework
 
                 Process newProc = new();
                 newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
+
+                if (arguments != null)
+                    newProc.StartInfo.Arguments = arguments;
+
                 newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
                 newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
                 newProc.StartInfo.UseShellExecute = false;
@@ -195,6 +217,22 @@ namespace AtomicFramework
                 while (true)
                     Process.GetCurrentProcess().WaitForExit();
             }
+        }
+
+        private static string? GetWine()
+        {
+            string[]? targets = Environment.GetEnvironmentVariable("PATH")?.Split(';');
+            if (targets == null)
+                return null;
+
+            foreach (string test in targets)
+            {
+                string path = test.Trim();
+                if (!String.IsNullOrEmpty(path) && File.Exists(Path.Combine(path, "wine")))
+                    return Path.GetFullPath(path);
+            }
+
+            return null;
         }
     }
 }
