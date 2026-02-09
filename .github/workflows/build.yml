@@ -16,19 +16,24 @@ on: # TODO: When release is drafted, build, attest, and attach
   release:
     types: [ published ]
 
+env:
+    STEAMCMD: /Microsoft/WinGet/Packages/Valve.SteamCMD_Microsoft.Winget.Source_8wekyb3d8bbwe
+
 jobs:
   build:
     runs-on: windows-2025
 
     steps:
+    - name: Setup Environment
+      run: |
+        echo "STEAMCMD=$env:LOCALAPPDATA/Microsoft/WinGet/Packages/Valve.SteamCMD_Microsoft.Winget.Source_8wekyb3d8bbwe" >> $GITHUB_ENV
+        echo "$env:LOCALAPPDATA/Microsoft/WinGet/Packages/Valve.SteamCMD_Microsoft.Winget.Source_8wekyb3d8bbwe" >> $GITHUB_PATH
+      
     - name: Checkout Repository
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
     
     - name: Install SteamCMD
-      id: steamcmd
-      run: |
-        winget install --accept-source-agreements -e --id Valve.SteamCMD
-        echo "STEAMCMD=$(Split-Path $(Get-Command steamcmd).Source)" >> $GITHUB_ENV
+      run: winget install --accept-source-agreements -e --id Valve.SteamCMD
     
     - name: Install Nuclear Option
       id: noinstall
