@@ -47,7 +47,12 @@ jobs:
       run: sudo apt-get install steamcmd
     
     - name: Install Nuclear Option
+      id: noinstall
       run: steamcmd +login anonymous +app_update 3930080 validate +quit
+      
+    - name: Dump SteamCMD Logs
+      if: ${{ failure() && steps.noinstall.conclusion == 'failure' }}
+      run: cat /home/runner/.local/share/Steam/logs/*
       
     - name: Build Bep6
       run: dotnet build -c Release-Bep6
@@ -64,17 +69,22 @@ jobs:
       
     - name: Prepare Artifact
       run: |
-        mkdir -p "Release/BepInEx 5"
-        mkdir -p "Release/BepInEx 6"
-        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 5/AtomicFramework.dll"
-        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 6/AtomicFramework.dll"
-        ./7zz a -t7z -mx9 -mmt4 AtomicFramework.7z Release/*
+        ./7zz a -t7z -mx9 -mmt4 AtomicFramework-Bep5.7z ./bin/Release-Bep5/BepInEx/
+        ./7zz a -t7z -mx9 -mmt4 AtomicFramework-Bep6.7z ./bin/Release-Bep6/BepInEx/
     
-    - name: Upload Artifact
+    - name: Upload Artifact Bep5
       uses: actions/upload-artifact@v4
       with:
-        name: AtomicFramework.7z
-        path: AtomicFramework.7z
+        name: AtomicFramework-Bep5.7z
+        path: AtomicFramework-Bep5.7z
+        if-no-files-found: error
+        compression-level: 0 # It's already compressed
+        
+    - name: Upload Artifact Bep6
+      uses: actions/upload-artifact@v4
+      with:
+        name: AtomicFramework-Bep6.7z
+        path: AtomicFramework-Bep6.7z
         if-no-files-found: error
         compression-level: 0 # It's already compressed
 
@@ -82,5 +92,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836
       with:
-        files: AtomicFramework.7z
+        files: |
+            AtomicFramework-Bep5.7z
+            AtomicFramework-Bep6.7z
         fail_on_unmatched_files: true
