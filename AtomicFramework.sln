@@ -7,6 +7,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicFramework", "AtomicFr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicPatcher", "AtomicPatcher\AtomicPatcher.csproj", "{756F296C-53DB-420B-A915-C313065DBEFB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicModManager", "AtomicModManager\AtomicModManager.csproj", "{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicUtilities", "AtomicUtilities\AtomicUtilities.csproj", "{755AAB3F-5546-44C8-B9C4-182312619398}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		BepInEx-Template.targets = BepInEx-Template.targets
+		Generic-Template.targets = Generic-Template.targets
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug-Bep5|x64 = Debug-Bep5|x64
@@ -24,11 +34,34 @@ Global
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|x64.ActiveCfg = Release-Bep6|x64
 		{00BD8BEF-FC23-4EA9-BA39-9B409AEFA5BB}.Release-Bep6|x64.Build.0 = Release-Bep6|x64
 		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep5|x64.ActiveCfg = Debug-Bep5|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep5|x64.Build.0 = Debug-Bep5|x64
 		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep6|x64.ActiveCfg = Debug-Bep6|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Debug-Bep6|x64.Build.0 = Debug-Bep6|x64
 		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep5|x64.ActiveCfg = Release-Bep5|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep5|x64.Build.0 = Release-Bep5|x64
 		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep6|x64.ActiveCfg = Release-Bep6|x64
+		{756F296C-53DB-420B-A915-C313065DBEFB}.Release-Bep6|x64.Build.0 = Release-Bep6|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Debug-Bep5|x64.ActiveCfg = Debug|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Debug-Bep5|x64.Build.0 = Debug|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Debug-Bep6|x64.ActiveCfg = Debug|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Debug-Bep6|x64.Build.0 = Debug|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Release-Bep5|x64.ActiveCfg = Release|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Release-Bep5|x64.Build.0 = Release|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Release-Bep6|x64.ActiveCfg = Release|x64
+		{1A9B12C2-2630-4DA6-AF00-E03429C3FE99}.Release-Bep6|x64.Build.0 = Release|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Debug-Bep5|x64.ActiveCfg = Debug|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Debug-Bep5|x64.Build.0 = Debug|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Debug-Bep6|x64.ActiveCfg = Debug|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Debug-Bep6|x64.Build.0 = Debug|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Release-Bep5|x64.ActiveCfg = Release|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Release-Bep5|x64.Build.0 = Release|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Release-Bep6|x64.ActiveCfg = Release|x64
+		{755AAB3F-5546-44C8-B9C4-182312619398}.Release-Bep6|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B9C91FCD-DE30-4CD4-99C6-A2EEDD90B0A7}
 	EndGlobalSection
 EndGlobal

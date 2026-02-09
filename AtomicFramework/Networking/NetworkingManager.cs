@@ -128,7 +128,7 @@ namespace AtomicFramework
 
         public static bool IsHost(ulong player)
         {
-            return (NetworkManagerNuclearOption.i.Client.Player.Address as SteamEndPoint)?.Connection.SteamID.m_SteamID == player;
+            return (NetworkManagerNuclearOption.i.Client.Player.ConnectionHandle as SteamConnection)?.SteamID.m_SteamID == player;
         }
 
         private void OnDestroy()

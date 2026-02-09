@@ -88,7 +88,7 @@ namespace AtomicFramework
                                     }
                                     else // We are client
                                     {
-                                        IEndPoint peer = NetworkManagerNuclearOption.i.Client.Player.Address;
+                                        IConnectionHandle peer = NetworkManagerNuclearOption.i.Client.Player.ConnectionHandle;
 
                                         // If we are loading, we can toggle mods and can ignore their requirements
                                         if (NetworkManagerNuclearOption.i.Client.Player.SceneIsReady && mod.options.runtimeOptions != Mod.Options.Runtime.NONE)
@@ -96,8 +96,8 @@ namespace AtomicFramework
 
                                         if (options == Mod.Options.Multiplayer.REQUIRES_ALL ||
                                             (options == Mod.Options.Multiplayer.REQUIRES_HOST &&
-                                            peer is SteamEndPoint steamPeer &&
-                                            steamPeer.Connection.SteamID.m_SteamID == message.player))
+                                            peer is SteamConnection steamPeer &&
+                                            steamPeer.SteamID.m_SteamID == message.player))
                                             required.Add(plugin.Metadata.GUID);
                                     }
                                 }

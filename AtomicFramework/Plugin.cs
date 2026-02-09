@@ -5,7 +5,6 @@ using BepInEx.Logging;
 using UnityEngine;
 using System.Linq;
 using AtomicFramework.UI;
-using System.Reflection;
 
 #if BEP5
 using BepInEx.Bootstrap;
@@ -21,6 +20,7 @@ namespace AtomicFramework
     /// </summary>
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     [BepInProcess("NuclearOption.exe")]
+    [BepInProcess("NuclearOptionServer.exe")]
     internal class Plugin : BaseUnityPlugin
     {
         private static Plugin? _Instance;
@@ -48,6 +48,7 @@ namespace AtomicFramework
                 throw new InvalidOperationException($"Reinitialization of Plugin {MyPluginInfo.PLUGIN_GUID}");
 
             LoadingManager.GameLoaded += LateLoad;
+            LoadingManager.NetworkReady += NetworkReady;
         }
 
         ~Plugin()
@@ -65,21 +66,22 @@ namespace AtomicFramework
         {
             Logger.LogInfo($"LateLoading {MyPluginInfo.PLUGIN_GUID}");
 
-            if (!(bool)(typeof(SteamManager).GetField("s_EverInitialized", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null)))
-            {
-                Logger.LogWarning("Steam is not initalized, networking will be unavailable.");
-                return;
-            }
-
             PluginInfo[] plugins = PluginsLoaded();
             string[] legacy = [.. plugins.Where(plugin => plugin.Instance is not Mod).Select(plugin => plugin.Metadata.GUID)];
             string[] modern = [.. plugins.Where(plugin => plugin.Instance is Mod).Select(plugin => plugin.Metadata.GUID)];
 
-            Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
-            Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
+            if (legacy.Length > 0)
+                Logger.LogDebug($"Loaded with the following legacy mods {string.Join(", ", legacy)}");
+
+            if (modern.Length > 0)
+                Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
 
             ModButton.Init();
+        }
 
+        private void NetworkReady()
+        {
+            Logger.LogDebug("Network loaded");
             gameObject.AddComponent<NetworkingManager>();
         }
 

@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../Generic-Template.targets" />
+	
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>AtomicModManager</AssemblyName>
+		<Configurations>Release;Debug</Configurations>
+		<PublishSingleFile>true</PublishSingleFile>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(Configuration) == 'Debug'">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SemanticVersioning" Version="2.0.2" />
+		<PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</ProjectReference>
+	</ItemGroup>
+
+	<Target Name="CollectFiles" AfterTargets="PostBuildEvent" Condition="$(_IsPublishing) != true">
+		<ItemGroup>
+			<OutputFiles Include="$(PublishDir)/$(TargetName).exe" />
+			<OutputFiles Condition="$(DebugType) != 'none'" Include="$(PublishDir)/$(TargetName).pdb" />
+		</ItemGroup>
+		<PropertyGroup>
+			<Prefix>../bin/$(Configuration)</Prefix>
+			<Prefix2>BepInEx/patchers/AtomicFramework/</Prefix2>
+		</PropertyGroup>
+
+		<Message Importance="High" Text="Running dotnet publish" />
+		<Exec Command="dotnet publish -c $(Configuration) -f $(TargetFramework) -r $(RuntimeIdentifier) --no-self-contained --no-build -p:Platform=x64 " StandardOutputImportance="High" />
+
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
+				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
+				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+	</Target>
+</Project>

@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../Generic-Template.targets" />
+	
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<AssemblyName>AtomicUtilities</AssemblyName>
+		<Configurations>Release;Debug</Configurations>
+	</PropertyGroup>
+
+	<Target Name="CollectFiles" AfterTargets="PostBuildEvent">
+		<ItemGroup>
+			<OutputFiles Include="$(TargetPath)" />
+			<OutputFiles Condition="$(DebugType) != 'none'" Include="$(TargetDir)/$(TargetName).pdb" />
+		</ItemGroup>
+		<PropertyGroup>
+			<Prefix>../bin/$(Configuration)</Prefix>
+			<Prefix2>BepInEx/patchers/AtomicFramework/</Prefix2>
+		</PropertyGroup>
+
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
+			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+	</Target>
+</Project>
