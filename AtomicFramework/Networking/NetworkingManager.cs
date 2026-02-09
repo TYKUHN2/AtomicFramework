@@ -27,7 +27,6 @@ namespace AtomicFramework
         private readonly SemaphoreSlim listenLock = new(1);
 
         private readonly List<ushort> ports = [0];
-        internal readonly Dictionary<HSteamListenSocket, ushort> revPorts = [];
         private readonly Dictionary<HSteamListenSocket, NetworkChannel> sockets = [];
         internal readonly Dictionary<HSteamNetConnection, NetworkChannel> connections = [];
 
@@ -231,6 +230,8 @@ namespace AtomicFramework
                 connections[conn] = channel;
 
                 SteamNetworkingSockets.SetConnectionPollGroup(conn, poll);
+
+                SteamNetworkingSockets.SetConnectionName(conn, $"{channel.GUID}({channel.channel}):{remote.GetSteamID64()}");
             }
             else
                 SteamNetworkingSockets.CloseConnection(conn, 1001, $"Connection refused ({cond1} {cond2})", false);
@@ -270,9 +271,9 @@ namespace AtomicFramework
         {
             Plugin.Logger.LogDebug($"Allocating {GUID}:{channel}");
 
-            listenLock.Wait();
-
             HSteamListenSocket socket = HSteamListenSocket.Invalid;
+
+            listenLock.Wait();
 
             for (ushort i = 0; i < ports.Count; i++)
             {
@@ -281,7 +282,6 @@ namespace AtomicFramework
                     ports.Insert(i, i);
 
                     socket = SteamNetworkingSockets.CreateListenSocketP2P(i, 0, []);
-                    revPorts[socket] = i;
 
                     break;
                 }
@@ -293,33 +293,59 @@ namespace AtomicFramework
                 ports.Add(end);
 
                 socket = SteamNetworkingSockets.CreateListenSocketP2P(end, 0, []);
-                revPorts[socket] = end;
             }
 
             if (socket == HSteamListenSocket.Invalid)
                 throw new IOException("Failed to generate socket");
 
-            Plugin.Logger.LogDebug($"Channel for socket {socket.m_HSteamListenSocket} open");
             NetworkChannel chan = new(socket, GUID, channel);
             sockets[socket] = chan;
             listenLock.Release();
+
+            Plugin.Logger.LogDebug($"Channel for socket {socket.m_HSteamListenSocket} open");
 
             return chan;
         }
 
         internal void NotifyClosed(HSteamListenSocket socket)
         {
+            ushort port = GetListenPort(socket);
+            if (port == 0)
+                return;
+            
             listenLock.Wait();
 
-            if (revPorts.TryGetValue(socket, out ushort port))
-            {
-                ports.Remove(port);
-                revPorts.Remove(socket);
-            }
-
+            ports.Remove(port);
             sockets.Remove(socket);
 
             listenLock.Release();
+        }
+
+        internal ushort GetListenPort(HSteamListenSocket socket)
+        {
+            int port;
+            ulong len = 4;
+            ESteamNetworkingGetConfigValueResult res;
+
+            unsafe
+            {
+                res = SteamNetworkingUtils.GetConfigValue(
+                    ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_LocalVirtualPort,
+                    ESteamNetworkingConfigScope.k_ESteamNetworkingConfig_ListenSocket,
+                    new IntPtr(&socket),
+                    out _,
+                    new IntPtr(&port),
+                    ref len
+                );
+            }
+
+            if (res < 0)
+            {
+                Plugin.Logger.LogError("Failed to get port of listen socket");
+                return 0;
+            }
+
+            return (ushort)port;
         }
 
         internal void NotifyClosed(HSteamNetConnection conn)

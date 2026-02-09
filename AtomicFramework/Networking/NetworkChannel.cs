@@ -51,7 +51,7 @@ namespace AtomicFramework
         /// </summary>
         public ConnectionFilter? OnConnection;
 
-        private readonly string GUID;
+        internal readonly string GUID;
 
         /// <summary>
         /// ID of this virtual channel.
@@ -111,6 +111,12 @@ namespace AtomicFramework
 
             void OnPort(ushort port)
             {
+                if (port == 0)
+                {
+                    OnConnectionFailed?.Invoke(address, false);
+                    return;
+                }
+
                 SteamNetworkingIdentity identity = new();
                 identity.SetSteamID64(address);
 

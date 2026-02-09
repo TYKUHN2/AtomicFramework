@@ -145,7 +145,7 @@ namespace AtomicFramework
                                 if (((Mod)plugin.Instance).Networking!.channels.TryGetValue(channel, out var netChan))
                                 {
                                     HSteamListenSocket socket = netChan.socket;
-                                    writer.Write(NetworkingManager.instance!.revPorts.GetValueOrDefault(socket, (ushort)0));
+                                    writer.Write(NetworkingManager.instance!.GetListenPort(socket));
                                 }
                                 else
                                     writer.Write((ushort)0);
