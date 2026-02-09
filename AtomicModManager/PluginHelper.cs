@@ -1,18 +1,20 @@
-using System.Linq.Expressions;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace AtomicFramework
 {
     internal static class PluginHelper
     {
-        internal static string GetBepInEx(string bep_path)
+        internal static Assembly GetBepInEx(MetadataLoadContext mlc, string bep_path)
         {
             string core_path = Path.Combine(bep_path, "core");
+            string path;
 
             if (File.Exists(Path.Combine(core_path, "BepInEx.Unity.Mono.dll")))
-                return Path.Combine(core_path, "BepInEx.Unity.Mono.dll");
+                path = Path.Combine(core_path, "BepInEx.Unity.Mono.dll");
             else
-                return Path.Combine(core_path, "BepInEx.dll");
+                path = Path.Combine(core_path, "BepInEx.dll");
+
+            return mlc.LoadFromAssemblyPath(path);
         }
 
         internal static Plugin[]? GetPlugins()
@@ -56,14 +58,7 @@ namespace AtomicFramework
 
             IEnumerable<Assembly> plugins = potentials.Where(a => a.GetReferencedAssemblies().Any(n => n.Name?.Contains("BepInEx") ?? false));
 
-            Assembly bepInEx = mlc.LoadFromAssemblyPath(GetBepInEx(bep_path));
-            Type? basePlugin = bepInEx.GetType(bepInEx.GetName().Name == "BepInEx.Unity.Mono" ? "BepInEx.Unity.Mono.BaseUnityPlugin" : "BepInEx.BaseUnityPlugin");
-            if (basePlugin == null)
-            {
-                Console.Error.WriteLine($"Failed to find BaseUnityPlugin from {bepInEx.GetName().Name}");
-                Console.Error.WriteLine(string.Join(", ", bepInEx.GetExportedTypes().Where(t => t.IsClass)));
-                throw new ArgumentNullException("BaseUnityPlugin Null");
-            }
+            Assembly bepInEx = GetBepInEx(mlc, bep_path);
 
             Version bepVersion = bepInEx.GetName().Version ?? (bepInEx.GetName().Name == "BepInEx.Unity.Mono" ? new(6, 0) : new(5, 0));
             Plugin[] output = [new(bepVersion, "BepInEx", "BepInEx", bepVersion), .. plugins.Select(p => {
