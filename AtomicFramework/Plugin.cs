@@ -5,7 +5,6 @@ using BepInEx.Logging;
 using UnityEngine;
 using System.Linq;
 using AtomicFramework.UI;
-using System.Reflection;
 
 #if BEP5
 using BepInEx.Bootstrap;
@@ -21,6 +20,7 @@ namespace AtomicFramework
     /// </summary>
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     [BepInProcess("NuclearOption.exe")]
+    [BepInProcess("NuclearOptionServer.exe")]
     internal class Plugin : BaseUnityPlugin
     {
         private static Plugin? _Instance;
