@@ -20,6 +20,5 @@ within the scope of the project.
 
 ## Questions
 For questions, feel free to ask within the
-[Github repository](https://github.com/TYKUHN2/AtomicFramework/discussions),
-[Nuclear Option Discord](https://discord.com/channels/909034158205059082/1130830373937492050),
-or [my public email](mailto:contact@tyknet.xyz).
+[Github repository](https://github.com/TYKUHN2/AtomicFramework/discussions) or the
+[Nuclear Option Discord](https://discord.com/channels/909034158205059082/1467160830742106216).

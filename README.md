@@ -15,7 +15,8 @@ Currently, installing AtomicFramework is the same as any other BepInEx mod.
 AtomicFramework currently supports BepInEx 5 and 6, but only one at a time.
 The correct file must be installed depending on the BepInEx version.
 
-Once BepInEx has been installed, copy the AtomicFramework file into BepInEx/Plugins.
+Once BepInEx has been installed, copy the BepInEx folder 
+within the AtomicFramework archive over top the existing BepInEx folder.
 
 ### Features
 Currently, no user facing features are available, though many are planned such as mod toggling.

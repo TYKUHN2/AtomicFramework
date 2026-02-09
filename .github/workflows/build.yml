@@ -18,63 +18,69 @@ on: # TODO: When release is drafted, build, attest, and attach
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-2025
 
     steps:
+    - name: Setup Environment
+      run: |
+        echo "STEAMCMD=$env:LOCALAPPDATA/Microsoft/WinGet/Packages/Valve.SteamCMD_Microsoft.Winget.Source_8wekyb3d8bbwe" >> $env:GITHUB_ENV
+        echo "$env:LOCALAPPDATA/Microsoft/WinGet/Packages/Valve.SteamCMD_Microsoft.Winget.Source_8wekyb3d8bbwe" >> $env:GITHUB_PATH
+      
     - name: Checkout Repository
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
     
-    - name: Get Latest 7zip
-      run: |
-        echo "4ca3b7c6f2f67866b92622818b58233dc70367be2f36b498eb0bdeaaa44b53f4  7z2501-linux-x64.tar.xz" > hash
-        wget https://www.7-zip.org/a/7z2501-linux-x64.tar.xz
-        sha256sum -c hash
-        tar -xvf 7z2501-linux-x64.tar.xz 7zz
-        rm 7z2501-linux-x64.tar.xz
-        rm hash
-        chmod +x ./7zz
-    
-    - name: Prepare APT
-      run: |
-        sudo add-apt-repository multiverse
-        sudo dpkg --add-architecture i386
-        sudo apt update
-        
-    - name: Accept Steam License
-      run: echo steam steam/question select "I AGREE" | sudo debconf-set-selections
-    
     - name: Install SteamCMD
-      run: sudo apt-get install steamcmd
+      run: winget install --accept-source-agreements -e --id Valve.SteamCMD
+    
+    - name: Update SteamCMD
+      run: steamcmd +quit
+      continue-on-error: true # We know this will return 1 for some reason
     
     - name: Install Nuclear Option
+      id: noinstall
       run: steamcmd +login anonymous +app_update 3930080 validate +quit
+      continue-on-error: true
+      
+    - name: Try Again
+      if: ${{ steps.noinstall.outcome == 'failure' }}
+      id: noinstall2
+      run: steamcmd +login anonymous +app_update 3930080 validate +quit
+      
+    - name: Dump SteamCMD Logs
+      if: ${{ failure() && steps.noinstall2.conclusion == 'failure' }}
+      run: cat $env:STEAMCMD/logs/*
       
     - name: Build Bep6
       run: dotnet build -c Release-Bep6
       env:
-        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+        NUCLEAR_OPTION_REFERENCES: ${{ env.STEAMCMD }}/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
     
     - name: Build Bep5
       run: dotnet build -c Release-Bep5
       env:
-        NUCLEAR_OPTION_REFERENCES: /home/runner/.local/share/Steam/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
+        NUCLEAR_OPTION_REFERENCES: ${{ env.STEAMCMD }}/steamapps/common/NuclearOptionServer/NuclearOptionServer_Data/Managed/
       
     - name: Test
       run: dotnet test --no-build --verbosity normal
       
     - name: Prepare Artifact
       run: |
-        mkdir -p "Release/BepInEx 5"
-        mkdir -p "Release/BepInEx 6"
-        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 5/AtomicFramework.dll"
-        cp AtomicFramework/bin/x64/Release-Bep5/netstandard2.1/AtomicFramework.dll "Release/BepInEx 6/AtomicFramework.dll"
-        ./7zz a -t7z -mx9 -mmt4 AtomicFramework.7z Release/*
+        7z a -t7z -mx9 -mmt4 AtomicFramework-Bep5.7z ./bin/Release-Bep5/BepInEx/
+        7z a -t7z -mx9 -mmt4 AtomicFramework-Bep6.7z ./bin/Release-Bep6/BepInEx/
     
-    - name: Upload Artifact
+    - name: Upload Artifact Bep5
       uses: actions/upload-artifact@v4
       with:
-        name: AtomicFramework.7z
-        path: AtomicFramework.7z
+        name: AtomicFramework-Bep5.7z
+        path: AtomicFramework-Bep5.7z
+        if-no-files-found: error
+        compression-level: 0 # It's already compressed
+        
+    - name: Upload Artifact Bep6
+      uses: actions/upload-artifact@v4
+      with:
+        name: AtomicFramework-Bep6.7z
+        path: AtomicFramework-Bep6.7z
         if-no-files-found: error
         compression-level: 0 # It's already compressed
 
@@ -82,5 +88,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836
       with:
-        files: AtomicFramework.7z
+        files: |
+            AtomicFramework-Bep5.7z
+            AtomicFramework-Bep6.7z
         fail_on_unmatched_files: true
