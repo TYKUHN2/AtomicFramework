@@ -44,7 +44,7 @@ namespace AtomicFramework
             try
             {
                 Log.LogDebug("Fetching HookBepInEx");
-                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
+                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework/AtomicFramework.dll"));
                 MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
                     .Methods.First(m => m.Name == "HookBepInEx");
 
@@ -88,7 +88,7 @@ namespace AtomicFramework
             try
             {
                 Log.LogDebug("Fetching HookBepInEx");
-                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework.dll"));
+                AssemblyDefinition plugin = AssemblyDefinition.ReadAssembly(Path.Combine(Paths.PluginPath, "AtomicFramework/AtomicFramework.dll"));
                 MethodReference hookRef = plugin.MainModule.Types.First(t => t.Name == "EarlyHook")
                     .Methods.First(m => m.Name == "HookBepInEx");
 
