@@ -1,4 +1,4 @@
-﻿using AtomicFramework.Communication;
+using AtomicFramework.Communication;
 using BepInEx;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -54,7 +54,7 @@ namespace AtomicFramework
                 TypeDefinition chainloader = assembly.MainModule.Types
                     .Where(t => t.IsClass && t.FullName == "BepInEx.Bootstrap.Chainloader").First();
 
-                Log.LogDebug("Patching Init");
+                Log.LogDebug("Patching Chainloader");
                 MethodDefinition init = chainloader.Methods.Where(m => m.Name == "Initialize").First();
                 Instruction first = init.Body.Instructions[0];
                 ILProcessor proc = init.Body.GetILProcessor();
@@ -98,7 +98,7 @@ namespace AtomicFramework
                 TypeDefinition chainloader = assembly.MainModule.Types
                     .Where(t => t.IsClass && t.FullName == "BepInEx.Unity.Mono.Bootstrap.UnityChainloader").First();
 
-                Log.LogDebug("Patching Init");
+                Log.LogDebug("Patching UnityChainloader");
                 MethodDefinition init = chainloader.Methods.Where(m => m.Name == "Initialize").First();
                 Instruction first = init.Body.Instructions[0];
                 ILProcessor proc = init.Body.GetILProcessor();
@@ -159,17 +159,34 @@ namespace AtomicFramework
 
                 ModManager manager = new(newProc.StandardOutput, newProc.StandardInput);
 
+#nullable disable
                 NATIVE_DISABLED = manager.ReadPlugins();
-                ATOMIC_DISABLED = manager.ReadPlugins();
+                if (NATIVE_DISABLED == null)
+                {
+                    Log.LogWarning("Failed to receive data from the mod manager");
+                    NATIVE_DISABLED = [];
+                    ATOMIC_DISABLED = [];
+                }
+                else
+                {
+                    ATOMIC_DISABLED = manager.ReadPlugins();
+
+                    if (ATOMIC_DISABLED == null)
+                    {
+                        Log.LogWarning("Failed to receive data from the mod manager");
+                        ATOMIC_DISABLED = [];
+                    }
+                }
+#nullable enable
 
                 if (NATIVE_DISABLED.Length > 0)
-                    Log.LogInfo($"Blocking {String.Join(", ", NATIVE_DISABLED)}");
+                    Log.LogDebug($"Blocking {String.Join(", ", NATIVE_DISABLED)}");
 
                 if (ATOMIC_DISABLED.Length > 0)
-                    Log.LogInfo($"Disabling {String.Join(", ", ATOMIC_DISABLED)}");
+                    Log.LogDebug($"Disabling {String.Join(", ", ATOMIC_DISABLED)}");
 
                 if (NATIVE_DISABLED.Contains("AtomicFramework"))
-                    Log.LogWarning("WARNING: AtomicFramework must be loaded to function properly. It will not be awoken.");
+                    Log.LogWarning("AtomicFramework must be loaded to function properly. It will not be awoken.");
             }
             catch (Exception e)
             {

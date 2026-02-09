@@ -51,15 +51,22 @@ namespace AtomicFramework.Communication
                 output.Write(plugin);
         }
 
-        public string[] ReadPlugins()
+        public string[]? ReadPlugins()
         {
-            ushort len = input.ReadUInt16();
-            string[] plugins = new string[len];
+            try
+            {
+                ushort len = input.ReadUInt16();
+                string[] plugins = new string[len];
 
-            for (ushort i = 0; i < len; i++)
-                plugins[i] = input.ReadString();
+                for (ushort i = 0; i < len; i++)
+                    plugins[i] = input.ReadString();
 
-            return plugins;
+                return plugins;
+            }
+            catch (EndOfStreamException)
+            {
+                return [];
+            }
         }
     }
 }
