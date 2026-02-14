@@ -29,9 +29,9 @@ namespace AtomicFramework
             if (channels.ContainsKey(channel))
                 return channels[channel];
 
+            listenLock.Wait();
             NetworkChannel chan = NetworkingManager.instance!.OpenListen(GUID, channel);
 
-            listenLock.Wait();
             channels[channel] = chan;
             listenLock.Release();
 
