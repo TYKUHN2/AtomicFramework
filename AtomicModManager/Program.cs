@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace AtomicFramework
 {
@@ -23,9 +24,12 @@ namespace AtomicFramework
 
                 Console.WriteLine("Detected stdin communication.");
             }
+#else
+            Console.SetOut(new NullWriter());
+            Console.SetError(new NullWriter());
 #endif
 
-             try
+            try
             {
                 ApplicationConfiguration.Initialize();
 
@@ -40,10 +44,12 @@ namespace AtomicFramework
                     string[] NATIVE_DISABLE = [.. disabled.Where(p => p.atomicVersion == null).Select(p => p.guid)];
                     string[] ATOMIC_DISABLE = [.. disabled.Where(p => p.atomicVersion != null).Select(p => p.guid)];
 
+#if DEBUG
                     Console.WriteLine("Dump");
                     Console.Out.WriteLine(string.Join(", ", NATIVE_DISABLE));
                     Console.Out.WriteLine(string.Join(", ", ATOMIC_DISABLE));
                     Console.Out.Flush();
+#endif
 
                     comm.WritePlugins(NATIVE_DISABLE);
                     comm.WritePlugins(ATOMIC_DISABLE);
@@ -51,8 +57,10 @@ namespace AtomicFramework
             }
             catch (Exception ex)
             {
+#if DEBUG
                 Console.Error.WriteLine(ex);
                 Process.GetCurrentProcess().WaitForExit();
+#endif
             }
             
         }
@@ -67,5 +75,10 @@ namespace AtomicFramework
         private static extern IntPtr GetStdHandle(UInt32 nStdHandle);
         [DllImport("kernel32.dll")]
         private static extern void SetStdHandle(UInt32 nStdHandle, IntPtr handle);
+
+        private class NullWriter : TextWriter
+        {
+            public override Encoding Encoding => Encoding.UTF8;
+        }
     }
 }
