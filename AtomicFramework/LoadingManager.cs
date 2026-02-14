@@ -225,7 +225,7 @@ namespace AtomicFramework
             if (PrePlayerAuthenticating?.InvokeCancelable(conn.SteamID.m_SteamID) == false)
             {
                 player.Disconnect();
-                NetworkingManager.instance!.Kill(conn.SteamID.m_SteamID);
+                NetworkingManager.instance!.Kill(conn.SteamID.m_SteamID, NetworkingManager.KillReason.PREDISCOVERY);
                 return false;
             }
 
@@ -267,8 +267,9 @@ namespace AtomicFramework
                                       // or a more user-centric mechanism is available.
 
                         // Cannot disable and is unavailable. Cannot join.
+                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID, NetworkingManager.KillReason.DISCOVERY);
+                        Thread.Sleep(100);
                         player.Disconnect();
-                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
 
                         Plugin.Logger.LogDebug("Discovery.Subscriber.Kill");
 
@@ -314,8 +315,9 @@ namespace AtomicFramework
                             }
 
                             // Mod disabled, required, cannot enable.
+                            NetworkingManager.instance.Kill(conn.SteamID.m_SteamID, NetworkingManager.KillReason.DISCOVERY);
+                            Thread.Sleep(100);
                             player.Disconnect();
-                            NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
 
                             Plugin.Logger.LogDebug("Plugin.Required.Disabled.Kill");
 
@@ -333,8 +335,9 @@ namespace AtomicFramework
                     {
                         Plugin.Logger.LogDebug("Discovery.Required.Kill");
 
+                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID, NetworkingManager.KillReason.DISCOVERY);
+                        Thread.Sleep(100);
                         player.Disconnect();
-                        NetworkingManager.instance.Kill(conn.SteamID.m_SteamID);
                     }
                 });
             };
@@ -355,8 +358,9 @@ namespace AtomicFramework
 
             if (PlayerAuthenticating?.InvokeCancelable(id) == false)
             {
+                NetworkingManager.instance!.Kill(id, NetworkingManager.KillReason.POSTDISCOVERY);
+                Thread.Sleep(100);
                 player.Disconnect();
-                NetworkingManager.instance!.Kill(id);
             }
             else
             {

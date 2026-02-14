@@ -14,7 +14,7 @@ namespace AtomicFramework
     {
         private static readonly byte[] Handshake = [0x01, 0x00, 0x00, 0x00]; // Our maximum discovery version (little endian): 1.0
 
-        private readonly NetworkChannel channel = NetworkingManager.instance!.OpenListen("AtomicFramework", 0);
+        internal readonly NetworkChannel channel = NetworkingManager.instance!.OpenListen("AtomicFramework", 0);
 
         private int pending = 0;
 
@@ -140,8 +140,6 @@ namespace AtomicFramework
             int res = Interlocked.Decrement(ref pending);
             if (res == 0)
                 Ready?.Invoke();
-            else if (res < 0)
-                res = 0;
         }
 
         private void Fail(ulong player, bool refused)
@@ -154,8 +152,6 @@ namespace AtomicFramework
             int res = Interlocked.Decrement(ref pending);
             if (res == 0)
                 Ready?.Invoke();
-            else if (res < 0)
-                res = 0;
         }
 
         private void Disconnect(ulong player)

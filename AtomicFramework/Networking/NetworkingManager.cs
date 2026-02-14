@@ -204,13 +204,13 @@ namespace AtomicFramework
             }
         }
 
-        internal void Kill(ulong player)
+        internal void Kill(ulong player, KillReason reason)
         {
             foreach (HSteamNetConnection conn in connections.Keys.ToArray())
             {
                 SteamNetworkingSockets.GetConnectionInfo(conn, out SteamNetConnectionInfo_t info);
                 if (info.m_identityRemote.GetSteamID64() == player)
-                    OnDisconnect(conn, info.m_identityRemote, (ESteamNetConnectionEnd)1003);
+                    OnDisconnect(conn, info.m_identityRemote, (ESteamNetConnectionEnd)reason);
             }
         }
         private void OnConnection(HSteamListenSocket listen, HSteamNetConnection conn, SteamNetworkingIdentity remote)
@@ -244,15 +244,32 @@ namespace AtomicFramework
             channel.NotifyConnected(remote.GetSteamID64(), conn);
         }
 
-        private void OnDisconnect(HSteamNetConnection conn, SteamNetworkingIdentity remote, ESteamNetConnectionEnd _)
+        private void OnDisconnect(HSteamNetConnection conn, SteamNetworkingIdentity remote, ESteamNetConnectionEnd reason)
         {
             NetworkChannel channel = connections[conn];
 
             channel.ReceiveDisconnect(remote.GetSteamID64());
 
-            SteamNetworkingSockets.CloseConnection(conn, 1000, "Channel closed", false);
+            SteamNetworkingSockets.CloseConnection(conn, (int)reason, "Channel closed", false);
 
             connections.Remove(conn);
+
+            if (channel == discovery.channel)
+            {
+                switch ((KillReason)reason)
+                {
+                    case KillReason.PREDISCOVERY:
+                        GameManager.SetDisconnectReason(new("Server kicked you before discovery."));
+                        break;
+                    case KillReason.DISCOVERY:
+                        GameManager.SetDisconnectReason(new("Server kicked you because of your mod list."));
+                        break;
+                    case KillReason.POSTDISCOVERY:
+                        GameManager.SetDisconnectReason(new("Server kicked you after discovery."));
+                        break;
+                    default: break;
+                }
+            }
         }
 
         private void OnFailedConnection(HSteamNetConnection conn, SteamNetworkingIdentity remote, ESteamNetConnectionEnd reason)
@@ -343,6 +360,16 @@ namespace AtomicFramework
                 Client client = (Client)AccessTools.Field(typeof(SteamSocket), "common").GetValue(socket);
                 AccessTools.Method(typeof(Client), "OnConnectionStatusChanged").Invoke(client, [change]);
             }
+        }
+
+        internal enum KillReason
+        {
+            CLOSED = 1000,
+            REJECTED,
+
+            PREDISCOVERY = 2000,
+            DISCOVERY,
+            POSTDISCOVERY,
         }
     }
 }
