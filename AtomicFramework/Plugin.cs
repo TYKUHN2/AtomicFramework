@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using UnityEngine;
 using System.Linq;
 using AtomicFramework.UI;
+using NuclearOption.Networking;
 
 #if BEP5
 using BepInEx.Bootstrap;
@@ -83,6 +84,7 @@ namespace AtomicFramework
         {
             Logger.LogDebug("Network loaded");
             gameObject.AddComponent<NetworkingManager>();
+            NetworkManagerNuclearOption.i.SetModdedServer(true);
         }
 
         internal PluginInfo[] PluginsEnabled()
