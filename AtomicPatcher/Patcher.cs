@@ -66,7 +66,7 @@ namespace AtomicFramework
             {
                 Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e}");
 
-                while (true)
+                if (CONSOLE_ENABLED)
                     Process.GetCurrentProcess().WaitForExit();
             }
         }
@@ -110,7 +110,7 @@ namespace AtomicFramework
             {
                 Log.LogError($"Uncaught exception in Patcher.PatchChainloader: {e}");
 
-                while (true)
+                if (CONSOLE_ENABLED)
                     Process.GetCurrentProcess().WaitForExit();
             }
         }
@@ -124,6 +124,19 @@ namespace AtomicFramework
 
         public static string[] ATOMIC_DISABLED
         { get; private set; }
+
+        public static bool CONSOLE_ENABLED
+        {
+            get
+            {
+#if BEP5
+                Type consoleManager = typeof(BepInPlugin).Assembly.GetType("BepInEx.ConsoleManager");
+                return (bool)consoleManager.GetProperty("ConsoleActive").GetValue(null);
+#else
+                return ConsoleManager.ConsoleActive;
+#endif
+            }
+        }
 
 
         static Patcher()
@@ -228,7 +241,7 @@ namespace AtomicFramework
             {
                 Log.LogError($"Uncaught exception in Patcher.Impl: {e}");
 
-                while (true)
+                if (CONSOLE_ENABLED)
                     Process.GetCurrentProcess().WaitForExit();
             }
         }
