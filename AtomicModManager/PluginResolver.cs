@@ -15,7 +15,7 @@ namespace AtomicFramework
 
         public override Assembly? Resolve(MetadataLoadContext ctx, AssemblyName target)
         {
-            Console.WriteLine($"Resolving {target.Name}");
+            Program.Log.LogDebug($"Resolving {target.Name}");
 
             IEnumerable<string> plugins = GetAssemblies();
             foreach (string plugin in plugins)
@@ -29,7 +29,7 @@ namespace AtomicFramework
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine(e);
+                    Program.Log.LogError(e);
                 }
             }
 

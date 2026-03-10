@@ -43,30 +43,26 @@ namespace AtomicFramework.Communication
             outStream.Dispose();
         }
 
-        public void WritePlugins(string[] plugins)
+        public Packet? ReadPackets()
         {
-            output.Write((ushort)plugins.Length);
-
-            foreach (string plugin in plugins)
-                output.Write(plugin);
+            return Packet.Read(input);
         }
 
-        public string[]? ReadPlugins()
+        public void WritePacket(Packet packet)
         {
-            try
-            {
-                ushort len = input.ReadUInt16();
-                string[] plugins = new string[len];
+            output.Write(packet);
+            output.Flush();
+        }
 
-                for (ushort i = 0; i < len; i++)
-                    plugins[i] = input.ReadString();
+        public Logger CreateLogger()
+        {
+            return new Logger(output);
+        }
 
-                return plugins;
-            }
-            catch (EndOfStreamException)
-            {
-                return [];
-            }
+        private enum Functions
+        {
+            LOG,
+            DISABLE_PLUGINS
         }
     }
 }

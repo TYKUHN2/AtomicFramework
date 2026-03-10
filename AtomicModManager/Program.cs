@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using AtomicFramework.Communication;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -6,28 +6,22 @@ namespace AtomicFramework
 {
     internal static class Program
     {
+#pragma warning disable CS8618
+        public static Logger Log
+        {
+            get; private set;
+        }
+#pragma warning restore CS8618
+
         [STAThread]
         static void Main()
         {
-#if DEBUG
-            if (GetStdHandle(StdInputHandle) == int.MaxValue)
-            {
-                SetStdHandle(StdOutputHandle, 0);
-                AllocConsole();
-            }
-            else
-            {
-                AllocConsole();
+            using Communication.ModManager comm = new();
+            Log = comm.CreateLogger();
 
-                FileStream fs = new("CONOUT$", FileMode.Open, FileAccess.ReadWrite, FileShare.Write);
-                Console.SetOut(new StreamWriter(fs) { AutoFlush = true });
-
-                Console.WriteLine("Detected stdin communication.");
-            }
-#else
-            Console.SetOut(new NullWriter());
-            Console.SetError(new NullWriter());
-#endif
+            WarningWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetError(writer);
 
             try
             {
@@ -39,46 +33,25 @@ namespace AtomicFramework
 
                 Plugin[] disabled = window.GetDisabled();
 
-                using (Communication.ModManager comm = new())
-                {
-                    string[] NATIVE_DISABLE = [.. disabled.Where(p => p.atomicVersion == null).Select(p => p.guid)];
-                    string[] ATOMIC_DISABLE = [.. disabled.Where(p => p.atomicVersion != null).Select(p => p.guid)];
+                string[] NATIVE_DISABLE = [.. disabled.Where(p => p.atomicVersion == null).Select(p => p.guid)];
+                string[] ATOMIC_DISABLE = [.. disabled.Where(p => p.atomicVersion != null).Select(p => p.guid)];
 
-#if DEBUG
-                    Console.WriteLine("Dump");
-                    Console.Out.WriteLine(string.Join(", ", NATIVE_DISABLE));
-                    Console.Out.WriteLine(string.Join(", ", ATOMIC_DISABLE));
-                    Console.Out.Flush();
-#endif
-
-                    comm.WritePlugins(NATIVE_DISABLE);
-                    comm.WritePlugins(ATOMIC_DISABLE);
-                }
+                comm.WritePacket(new DisablePluginsPacket(NATIVE_DISABLE, ATOMIC_DISABLE));
             }
             catch (Exception ex)
             {
-#if DEBUG
-                Console.Error.WriteLine(ex);
-                Process.GetCurrentProcess().WaitForExit();
-#endif
+                Log.LogError(ex);
             }
-            
         }
 
-        private const UInt32 StdOutputHandle = 0xFFFFFFF5;
-        private const UInt32 StdInputHandle = 0xFFFFFFF6;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetStdHandle(UInt32 nStdHandle);
-        [DllImport("kernel32.dll")]
-        private static extern void SetStdHandle(UInt32 nStdHandle, IntPtr handle);
-
-        private class NullWriter : TextWriter
+        private class WarningWriter(): TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
+
+            public override void Write(char _)
+            {
+                
+            }
         }
     }
 }

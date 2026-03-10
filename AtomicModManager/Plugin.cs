@@ -36,7 +36,7 @@ namespace AtomicFramework
 
         internal Plugin(Assembly plugin)
         {
-            Console.WriteLine($"Processing {plugin.FullName}");
+            Program.Log.LogDebug($"Processing {plugin.FullName}");
             AssemblyName[] refs = [.. plugin.GetReferencedAssemblies().Where(n => n.Name?.Contains("BepInEx") ?? false)];
 
             if (refs.Length == 0)
@@ -76,7 +76,7 @@ namespace AtomicFramework
                 }
                 catch (FileNotFoundException)
                 {
-                    Console.Error.WriteLine($"Exception testing for plugin with {t.FullName}");
+                    Program.Log.LogError($"Exception testing for plugin with {t.FullName}");
 
                     return false;
                 }
@@ -90,7 +90,7 @@ namespace AtomicFramework
 
                 while (!cur.FullName!.StartsWith("BepInEx"))
                 {
-                    Console.Out.WriteLine($"Searching attributes of {cur.FullName}");
+                    Program.Log.LogDebug($"Searching attributes of {cur.FullName}");
                     attrs.AddRange(cur.CustomAttributes);
 
                     foreach (CustomAttributeData attr in cur.CustomAttributes)
@@ -102,7 +102,7 @@ namespace AtomicFramework
                         }
                         catch (FileNotFoundException)
                         {
-                            Console.Error.WriteLine($"Error extracting attribute from {cur.FullName}");
+                            Program.Log.LogError($"Error extracting attribute from {cur.FullName}");
                         }
                     }
 
@@ -117,7 +117,7 @@ namespace AtomicFramework
 
                     dependencies = [];
 
-                    Console.Out.WriteLine($"Class {entries[0].FullName} is a plugin or plugin derivative but we cannot extract the BepInPlugin attribute.");
+                    Program.Log.LogDebug($"Class {entries[0].FullName} is a plugin or plugin derivative but we cannot extract the BepInPlugin attribute.");
 
                     return;
                 }
@@ -128,7 +128,7 @@ namespace AtomicFramework
                     version = new(pluginAttr.ConstructorArguments[2].Value as string ?? "0.0");
                 }
 
-                Console.WriteLine($"Processing {guid}");
+                Program.Log.LogDebug($"Processing {guid}");
 
                 CustomAttributeData[] deps = [.. attrs.Where(a => a.AttributeType.Name == "BepInDependency")];
                 dependencies = [.. deps.Select(d =>
@@ -144,7 +144,7 @@ namespace AtomicFramework
                     else
                         range = new((args[1].Value as string)!, true);
 
-                    Console.WriteLine($"{guid} depends on {id}");
+                    Program.Log.LogDebug($"{guid} depends on {id}");
 
                     return new Dependency
                     {

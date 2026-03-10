@@ -19,6 +19,8 @@ namespace AtomicFramework
 
         internal static Plugin[]? GetPlugins()
         {
+            // TODO: Get Steam path from HKCU/Software/Valve/Steam/SteamPath and read steamapps/appmanifest_2168680.acf to find game folder
+            // TODO: On linux, use ~/.steam/steam/ for steam path instead of HKCU
             string? bep_path = Environment.GetEnvironmentVariable("BEP_PATH");
             if (bep_path != null && !Path.IsPathFullyQualified(bep_path))
                 bep_path = null;

@@ -17,9 +17,7 @@
 			<Prefix2>BepInEx/patchers/AtomicFramework/</Prefix2>
 		</PropertyGroup>
 
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
-			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
-			  SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>

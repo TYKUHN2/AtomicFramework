@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using BepInEx.Logging;
 
 #if BEP6
 using BepInEx.Preloader.Core.Patching;
@@ -23,7 +24,7 @@ namespace AtomicFramework
 #if BEP5
     public partial class Patcher
     {
-        private static readonly ManualLogSource Log = Logger.CreateLogSource(MyPluginInfo.PLUGIN_NAME);
+        private static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource(MyPluginInfo.PLUGIN_NAME);
 
         public static IEnumerable<string> TargetDLLs
         {
@@ -166,40 +167,53 @@ namespace AtomicFramework
                         return;
                 }
 
-                Process newProc = new();
-                newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
-
-                if (arguments != null)
-                    newProc.StartInfo.Arguments = arguments;
-
-                newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
-                newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
-                newProc.StartInfo.UseShellExecute = false;
-                newProc.StartInfo.RedirectStandardInput = true;
-                newProc.StartInfo.RedirectStandardOutput = true;
-                newProc.Start();
-
-                ModManager manager = new(newProc.StandardOutput, newProc.StandardInput);
-
-#nullable disable
-                NATIVE_DISABLED = manager.ReadPlugins();
-                if (NATIVE_DISABLED == null)
+                using (Process newProc = new())
                 {
-                    Log.LogWarning("Failed to receive data from the mod manager");
-                    NATIVE_DISABLED = [];
-                    ATOMIC_DISABLED = [];
-                }
-                else
-                {
-                    ATOMIC_DISABLED = manager.ReadPlugins();
+                    newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
 
-                    if (ATOMIC_DISABLED == null)
+                    if (arguments != null)
+                        newProc.StartInfo.Arguments = arguments;
+
+                    newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
+                    newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
+                    newProc.StartInfo.UseShellExecute = false;
+                    newProc.StartInfo.RedirectStandardInput = true;
+                    newProc.StartInfo.RedirectStandardOutput = true;
+                    newProc.Start();
+
+                    using (ModManager manager = new(newProc.StandardOutput, newProc.StandardInput))
                     {
-                        Log.LogWarning("Failed to receive data from the mod manager");
-                        ATOMIC_DISABLED = [];
+                        using ManualLogSource subLog = BepInEx.Logging.Logger.CreateLogSource("AtomicModManager");
+                        bool looping = true;
+                        while (looping)
+                        {
+                            Packet? read = manager.ReadPackets();
+
+                            switch (read)
+                            {
+                                case LogPacket log:
+                                    subLog.Log((LogLevel)log.level, log.message);
+                                    break;
+                                case DisablePluginsPacket plugins:
+                                    NATIVE_DISABLED = plugins.native;
+                                    ATOMIC_DISABLED = plugins.atomic;
+                                    looping = false;
+                                    break;
+                                case null when newProc.HasExited:
+                                    looping = false;
+                                    break;
+                                default:
+                                    Log.LogError("Unknown packet type from ModManager");
+                                    break;
+                            }
+                        }
                     }
+
+                    try
+                    {
+                        newProc.Kill();
+                    } catch { }
                 }
-#nullable enable
 
                 if (NATIVE_DISABLED.Length > 0)
                     Log.LogDebug($"Blocking {String.Join(", ", NATIVE_DISABLED)}");
