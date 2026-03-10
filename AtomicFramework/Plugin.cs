@@ -98,7 +98,7 @@ namespace AtomicFramework
 #if BEP5
             PluginInfo[] plugins = [.. Chainloader.PluginInfos.Values.Where(info => info.Instance != this)];
 #elif BEP6
-            PluginInfo[] plugins = [.. UnityChainloader.Instance.Plugins.Values.Where(info => info.Instance != (object)this)];
+            PluginInfo[] plugins = [.. UnityChainloader.Instance.Plugins.Values.Where(info => info.Instance is not Plugin)];
 #else
 #error Undefined bepinex version
 #endif

@@ -26,7 +26,7 @@ namespace AtomicFramework.UI
 
             transform.Find("ButtonList/Button").GetComponent<Button>().onClick.AddListener(OnClose);
 
-            PluginInfo[] plugins = [Plugin.Instance.Info, .. Plugin.Instance.PluginsLoaded().OrderBy(plugin => plugin.Metadata.Name)];
+            PluginInfo[] plugins = [Plugin.Instance.Info, .. Plugin.PluginsLoaded().OrderBy(plugin => plugin.Metadata.Name)];
 
             entries = [.. plugins.Select(plugin =>
             {

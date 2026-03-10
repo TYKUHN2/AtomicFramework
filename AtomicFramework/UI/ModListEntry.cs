@@ -23,7 +23,7 @@ namespace AtomicFramework.UI
             transform.Find("Buttons/Update").gameObject.SetActive(false);
             GameObject toggle = transform.Find("Buttons/Toggle").gameObject;
 
-            PluginInfo[] plugins = [Plugin.Instance.Info, .. Plugin.Instance.PluginsLoaded().OrderBy(plugin => plugin.Metadata.Name)];
+            PluginInfo[] plugins = [Plugin.Instance.Info, .. Plugin.PluginsLoaded().OrderBy(plugin => plugin.Metadata.Name)];
 
             if (plugin.Instance is Mod mod)
             {
