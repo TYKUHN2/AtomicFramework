@@ -40,6 +40,8 @@ namespace AtomicFramework
         /// </summary>
         public readonly Discovery discovery;
 
+        public event Action<ulong> OnInvalidMessage;
+
         internal static event Action<NetworkingManager>? OnNetworkingAvail;
 
 #pragma warning disable CS8618
@@ -360,6 +362,11 @@ namespace AtomicFramework
                 Client client = (Client)AccessTools.Field(typeof(SteamSocket), "common").GetValue(socket);
                 AccessTools.Method(typeof(Client), "OnConnectionStatusChanged").Invoke(client, [change]);
             }
+        }
+
+        internal void NotifyInvalid(ulong player)
+        {
+            OnInvalidMessage?.Invoke(player);
         }
 
         internal enum KillReason
