@@ -77,14 +77,15 @@ namespace AtomicFramework
             if (modern.Length > 0)
                 Logger.LogDebug($"Loaded with the following modern mods {string.Join(", ", modern)}");
 
+            LoadingManager.NetworkReady += NetworkReady;
+
             ModButton.Init();
         }
 
         private void NetworkReady()
         {
-            Logger.LogDebug("Network loaded");
-            gameObject.AddComponent<NetworkingManager>();
             NetworkManagerNuclearOption.i.SetModdedServer(true);
+            gameObject.AddComponent<NetworkingManager>();
         }
 
         internal PluginInfo[] PluginsEnabled()
@@ -92,7 +93,7 @@ namespace AtomicFramework
             return [.. PluginsLoaded().Where(info => ((MonoBehaviour)info.Instance).enabled)];
         }
 
-        internal PluginInfo[] PluginsLoaded()
+        internal static PluginInfo[] PluginsLoaded()
         {
 #if BEP5
             PluginInfo[] plugins = [.. Chainloader.PluginInfos.Values.Where(info => info.Instance != this)];

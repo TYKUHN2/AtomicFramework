@@ -295,7 +295,7 @@ namespace AtomicFramework
                 NetworkingManager.instance!.discovery.GetRequired(conn.SteamID.m_SteamID, required =>
                 {
                     Plugin.Logger.LogDebug("GetRequired");
-                    PluginInfo[] loaded = [.. Plugin.Instance.PluginsLoaded()];
+                    PluginInfo[] loaded = [.. Plugin.PluginsLoaded()];
                     PluginInfo[] loadedAndRequired = [.. loaded.Where(plugin => required.Contains(plugin.Metadata.GUID))];
 
                     if (loadedAndRequired.Length == required.Length) // All required are available

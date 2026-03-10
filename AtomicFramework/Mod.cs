@@ -12,7 +12,7 @@ namespace AtomicFramework
      * <summary>Parent class for all AtomicFramework compatible mods.</summary>
      */
     [BepInDependency("AtomicFramework", BepInDependency.DependencyFlags.HardDependency)]
-    public abstract class Mod: BaseUnityPlugin
+    public abstract class Mod(Mod.Options options) : BaseUnityPlugin
     {
 
         /**
@@ -53,16 +53,9 @@ namespace AtomicFramework
          */
         protected internal NetworkAPI? Networking;
 
-        internal readonly Options options;
+        internal readonly Options options = options;
 
-        protected Mod(Options options)
-        {
-            NetworkingManager.OnNetworkingAvail += OnNetworking;
-
-            this.options = options;
-        }
-
-        private void OnNetworking(NetworkingManager _)
+        internal void OnNetworking()
         {
             Networking = new(Info.Metadata.GUID);
         }
