@@ -1,4 +1,8 @@
 # Security
+## Preamble
+This policy outlines what is and isn't covered by AtomicFramework's security requirements/concerns, but if you are unsure, let us decide.
+We would rather have a report we can ignore than a vulnerability we don't know about.
+
 ## Scope
 AtomicFramework's scope of security focuses on access to a user's device from the network.
 
