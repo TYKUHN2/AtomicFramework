@@ -43,6 +43,16 @@ namespace AtomicFramework.Communication
             outStream.Dispose();
         }
 
+        public void Prompt()
+        {
+            output.Write((byte)0x00);
+        }
+
+        public void Poll()
+        {
+            input.ReadByte();
+        }
+
         public Packet? ReadPackets()
         {
             return Packet.Read(input);

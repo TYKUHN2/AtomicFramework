@@ -180,20 +180,42 @@ namespace AtomicFramework
                         return;
                 }
 
-                using (Process newProc = new())
+                string fullpath = Path.GetFullPath(filename);
+                Process? existing = Process.GetProcesses().FirstOrDefault(p => p.MainModule?.FileName == fullpath);
+                if (existing != null)
                 {
-                    newProc.StartInfo.FileName = Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename);
+                    using ModManager manager = new(existing.StandardOutput, existing.StandardInput);
+                    manager.Prompt();
+
+                    DisablePluginsPacket plugins = (DisablePluginsPacket)manager.ReadPackets()!;
+                    NATIVE_DISABLED = plugins.native;
+                    ATOMIC_DISABLED = plugins.atomic;
+
+                    try
+                    {
+                        existing.Kill();
+                    }
+                    catch { }
+                }
+                else
+                {
+                    ProcessStartInfo si = new(Path.Combine(Paths.PatcherPluginPath, "AtomicFramework", filename))
+                    {
+                        Environment =
+                        {
+                            { "BEP_PATH", Paths.BepInExRootPath },
+                            { "MANAGE_PATH", Paths.ManagedPath }
+                        },
+
+                        UseShellExecute = false,
+                        RedirectStandardInput = true,
+                        RedirectStandardOutput = true
+                    };
 
                     if (arguments != null)
-                        newProc.StartInfo.Arguments = arguments;
+                        si.Arguments = arguments;
 
-                    newProc.StartInfo.Environment["BEP_PATH"] = Paths.BepInExRootPath;
-                    newProc.StartInfo.Environment["MANAGE_PATH"] = Paths.ManagedPath;
-                    newProc.StartInfo.UseShellExecute = false;
-                    newProc.StartInfo.RedirectStandardInput = true;
-                    newProc.StartInfo.RedirectStandardOutput = true;
-                    newProc.Start();
-
+                    using Process newProc = Process.Start(si);
                     using (ModManager manager = new(newProc.StandardOutput, newProc.StandardInput))
                     {
                         using ManualLogSource subLog = BepInEx.Logging.Logger.CreateLogSource("AtomicModManager");
@@ -225,7 +247,8 @@ namespace AtomicFramework
                     try
                     {
                         newProc.Kill();
-                    } catch { }
+                    }
+                    catch { }
                 }
 
                 if (NATIVE_DISABLED.Length > 0)

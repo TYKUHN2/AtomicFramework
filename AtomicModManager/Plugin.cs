@@ -1,4 +1,4 @@
-﻿using Mono.Cecil;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
@@ -39,8 +39,8 @@ namespace AtomicFramework
             this.display_name = display_name;
             this.guid = guid;
             this.version = version;
-			
-			filename = null;
+
+            filename = null;
         }
 
         internal Plugin(AssemblyDefinition plugin)
@@ -218,8 +218,8 @@ namespace AtomicFramework
 
             return false;
         }
-		
-		internal static AssemblyDefinition? Load(string path)
+
+        internal static AssemblyDefinition? Load(string path)
         {
             if (!Path.IsPathRooted(path))
             {
