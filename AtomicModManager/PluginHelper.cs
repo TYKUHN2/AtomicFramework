@@ -1,18 +1,21 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace AtomicFramework
 {
     internal static class PluginHelper
     {
         internal static Assembly GetBepInEx(MetadataLoadContext mlc, string bep_path)
+        internal static AssemblyDefinition? GetBepInEx()
         {
             string core_path = Path.Combine(bep_path, "core");
             string path;
 
             if (File.Exists(Path.Combine(core_path, "BepInEx.Unity.Mono.dll")))
                 path = Path.Combine(core_path, "BepInEx.Unity.Mono.dll");
-            else
+            else if (File.Exists(Path.Combine(core_path, "BepInEx.dll")))
                 path = Path.Combine(core_path, "BepInEx.dll");
+            else
+                return null;
 
             return mlc.LoadFromAssemblyPath(path);
         }
