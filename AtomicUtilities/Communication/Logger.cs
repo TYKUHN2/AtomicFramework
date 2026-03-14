@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 
 namespace AtomicFramework.Communication
 {
@@ -8,6 +9,11 @@ namespace AtomicFramework.Communication
 
         public void Log(LogPacket.LogLevel level, string data)
         {
+#if DEBUG
+            if (Debugger.IsAttached)
+                Debugger.Log(0, Debugger.DefaultCategory, data + "\n");
+#endif
+
             LogPacket packet = new(level, data);
 
             output.Write(packet);

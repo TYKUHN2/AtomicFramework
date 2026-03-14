@@ -93,6 +93,7 @@ namespace AtomicFramework
             catch (Exception ex)
             {
                 Log.LogError(ex);
+                throw;
             }
         }
 
