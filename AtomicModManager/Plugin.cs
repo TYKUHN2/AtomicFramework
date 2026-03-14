@@ -1,4 +1,9 @@
-﻿using System.Reflection;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
+using Mono.Collections.Generic;
+using MonoMod.Cil;
+using System.Text;
 
 namespace AtomicFramework
 {
@@ -19,6 +24,8 @@ namespace AtomicFramework
         internal readonly string display_name;
         internal readonly string guid;
         internal readonly Version version;
+		
+        internal readonly string? filename;
 
         internal bool hasBep = false;
         internal bool hasAtomic = false;
@@ -32,12 +39,16 @@ namespace AtomicFramework
             this.display_name = display_name;
             this.guid = guid;
             this.version = version;
+			
+			filename = null;
         }
 
-        internal Plugin(Assembly plugin)
+        internal Plugin(AssemblyDefinition plugin)
         {
             Program.Log.LogDebug($"Processing {plugin.FullName}");
-            AssemblyName[] refs = [.. plugin.GetReferencedAssemblies().Where(n => n.Name?.Contains("BepInEx") ?? false)];
+            AssemblyNameReference[] refs = [.. plugin.MainModule.AssemblyReferences.Where(n => n.Name?.Contains("BepInEx") ?? false)];
+
+            filename = plugin.MainModule.FileName;
 
             if (refs.Length == 0)
                 throw new ArgumentException($"Assembly {plugin.FullName} not a plugin");
@@ -52,7 +63,7 @@ namespace AtomicFramework
                     bepVersion = new(5, 0);
             }
 
-            refs = [.. plugin.GetReferencedAssemblies().Where(n => n.Name?.Contains("AtomicFramework") ?? false)];
+            refs = [.. plugin.MainModule.AssemblyReferences.Where(n => n.Name?.Contains("AtomicFramework") ?? false)];
 
             if (refs.Length != 0)
             {
@@ -62,38 +73,20 @@ namespace AtomicFramework
                     atomicVersion = new(0, 0);
             }
 
-            Type[] entries = [.. plugin.GetTypes().Where(t =>
-            {
-                try {
-
-                    if (!t.IsClass)
-                        return false;
-
-                    if (t.IsAbstract)
-                        return false;
-
-                    return IsPlugin(t);
-                }
-                catch (FileNotFoundException)
-                {
-                    Program.Log.LogError($"Exception testing for plugin with {t.FullName}");
-
-                    return false;
-                }
-            })];
+            TypeDefinition[] entries = [.. plugin.MainModule.Types.Where(IsPlugin)];
 
             if (entries.Length == 1)
             {
-                Type cur = entries[0];
-                List<CustomAttributeData> attrs = [];
-                CustomAttributeData? pluginAttr = null;
+                TypeDefinition cur = entries[0];
+                List<CustomAttribute> attrs = [];
+                CustomAttribute? pluginAttr = null;
 
-                while (!cur.FullName!.StartsWith("BepInEx"))
+                while (true)
                 {
                     Program.Log.LogDebug($"Searching attributes of {cur.FullName}");
                     attrs.AddRange(cur.CustomAttributes);
 
-                    foreach (CustomAttributeData attr in cur.CustomAttributes)
+                    foreach (CustomAttribute attr in cur.CustomAttributes)
                     {
                         try
                         {
@@ -106,12 +99,15 @@ namespace AtomicFramework
                         }
                     }
 
-                    cur = cur.BaseType!;
+                    if (!cur.BaseType.Namespace.StartsWith("BepInEx"))
+                        cur = cur.BaseType.Resolve();
+                    else
+                        break;
                 }
 
                 if (pluginAttr == null)
                 {
-                    display_name = plugin.GetName().Name!;
+                    display_name = plugin.Name.Name;
                     guid = "Error";
                     version = new(0, 0);
 
@@ -130,16 +126,34 @@ namespace AtomicFramework
 
                 Program.Log.LogDebug($"Processing {guid}");
 
-                CustomAttributeData[] deps = [.. attrs.Where(a => a.AttributeType.Name == "BepInDependency")];
+                CustomAttribute[] deps = [.. attrs.Where(a => a.AttributeType.Name == "BepInDependency")];
                 dependencies = [.. deps.Select(d =>
                 {
-                    var args = d.ConstructorArguments;
+                    Collection<CustomAttributeArgument> args;
+
+                    // We'll crash trying to load the enum
+                    if (d.Constructor.Parameters[1].ParameterType.IsValueType)
+                    {
+                        byte[] blob = d.GetBlob();
+
+                        args = [
+                            new(
+                                d.Constructor.Module.GetTypeReferences().First(@ref => @ref.FullName == "System.String"),
+                                Encoding.UTF8.GetString(blob, 3, blob[2])
+                                ),
+                            new(
+                                d.Constructor.Module.GetTypeReferences().First(@ref => @ref.FullName == "BepInEx.BepInDependency/DependencyFlags"),
+                                (int)(blob[blob[2] + 3]))
+                        ];
+                    }
+                    else
+                        args = d.ConstructorArguments;
 
                     string id = (args[0].Value as string)!;
                     SemanticVersioning.Range? range = null;
                     bool hard = true;
 
-                    if (args[1].ArgumentType.IsEnum)
+                    if (args[1].Type.Name == "DependencyFlags")
                         hard = ((int)args[1].Value!) == 1;
                     else
                         range = new((args[1].Value as string)!, true);
@@ -155,25 +169,96 @@ namespace AtomicFramework
                 }).Where(d => d.guid != "AtomicFramework")];
             }
             else
-                throw new ArgumentException($"Plugin {plugin.GetName().Name} missing BaseUnityPlugin");
+                throw new ArgumentException($"Plugin {plugin.Name.Name} missing BaseUnityPlugin");
         }
 
-        private static bool IsPlugin(Type test)
+        internal static bool IsPlugin(string name)
         {
-            Type? cur = test.BaseType;
-            while (cur != null)
+            AssemblyDefinition? ass = Load(name);
+            if (ass == null)
+                return false;
+
+            if (!ass.MainModule.AssemblyReferences.Any(r => r.Name.StartsWith("BepInEx")))
+                return false;
+
+            TypeDefinition[] candidates = [.. ass.MainModule.Types.Where(t => !t.IsAbstract && !t.IsInterface)];
+
+            return candidates.Any(IsPlugin);
+        }
+
+        private static bool IsPlugin(TypeDefinition test)
+        {
+            if (test.IsAbstract || test.IsInterface || test.BaseType == null)
+                return false;
+
+            List<TypeDefinition> tree = [test];
+            try
             {
-                if (cur.FullName!.StartsWith("System") || cur.FullName.StartsWith("Unity") ||
-                    cur.FullName.StartsWith("Mono"))
-                    return false;
+                while (true)
+                {
+                    TypeReference cur = tree[^1].BaseType;
 
-                if (cur.FullName == "BepInEx.Unity.Mono.BaseUnityPlugin" || cur.FullName == "BepInEx.BaseUnityPlugin")
-                    return true;
+                    if (cur.Namespace.StartsWith("System") || cur.Namespace.StartsWith("Unity") ||
+                        cur.Namespace.StartsWith("Mono"))
+                        return false;
 
-                cur = cur.BaseType;
+                    if (cur.Namespace.StartsWith("BepInEx") && cur.Name == "BaseUnityPlugin")
+                        break;
+
+                    tree.Add(cur.Resolve());
+                }
+            }
+            catch
+            {
+                return false;
             }
 
+            if (tree.SelectMany(t => t.CustomAttributes).Any(a => a.AttributeType.Name == "BepInPlugin"))
+                return true;
+
             return false;
+        }
+		
+		internal static AssemblyDefinition? Load(string path)
+        {
+            if (!Path.IsPathRooted(path))
+            {
+                if (Program.BEP_PATH == null || !path.EndsWith(".dll"))
+                    return null;
+
+                path = Path.Combine(Program.BEP_PATH, "plugins", path);
+            }
+
+            return AssemblyDefinition.ReadAssembly(path,
+                new ReaderParameters(ReadingMode.Deferred) { AssemblyResolver = new RecursivePluginResolver() });
+        }
+        private class RecursivePluginResolver : IAssemblyResolver
+        {
+            public void Dispose()
+            { }
+
+            public AssemblyDefinition Resolve(AssemblyNameReference name)
+            {
+                return Resolve(name, new ReaderParameters(ReadingMode.Deferred) { AssemblyResolver = this });
+            }
+
+            public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
+            {
+                if (Program.BEP_PATH == null)
+                    throw new AssemblyResolutionException(name);
+
+                string basePath = Path.Combine(Program.BEP_PATH, "plugins");
+
+                string[] found = Directory.GetFiles(basePath, name.Name + ".dll", SearchOption.AllDirectories);
+
+                if (found.Length == 0)
+                    throw new AssemblyResolutionException(name);
+
+                return AssemblyDefinition.ReadAssembly(
+                    File.Open(found[0], FileMode.Open, FileAccess.Read, FileShare.Read),
+                    parameters
+                );
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="../Generic-Template.targets" />
 	
 	<PropertyGroup>
@@ -18,13 +18,18 @@
 
 	<ItemGroup>
 		<PackageReference Include="SemanticVersioning" Version="2.0.2" />
-		<PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
+		<PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj">
+		<ProjectReference Include="..\AtomicUtilities\AtomicUtilities.csproj" PrivateAssets="all">
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 		</ProjectReference>
+		<Reference Include="Mono.Cecil">
+			<HintPath>$(NUCLEAR_OPTION_REFERENCES)\..\..\BepInEx\core\Mono.Cecil.dll</HintPath>
+			<Private>False</Private>
+			<PrivateAssets>all</PrivateAssets>
+		</Reference>
 	</ItemGroup>
 
 	<Target Name="CollectFiles" AfterTargets="PostBuildEvent" Condition="$(_IsPublishing) != true">
@@ -40,9 +45,7 @@
 		<Message Importance="High" Text="Running dotnet publish" />
 		<Exec Command="dotnet publish -c $(Configuration) -f $(TargetFramework) -r $(RuntimeIdentifier) --no-self-contained --no-build -p:Platform=x64 " StandardOutputImportance="High" />
 
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)"
-				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)"
-				SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep5/$(Prefix2)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(Prefix)-Bep6/$(Prefix2)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
 	</Target>
 </Project>

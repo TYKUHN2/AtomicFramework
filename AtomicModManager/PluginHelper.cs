@@ -1,4 +1,5 @@
 using System.Reflection;
+using Mono.Cecil;
 
 namespace AtomicFramework
 {
@@ -7,7 +8,10 @@ namespace AtomicFramework
         internal static Assembly GetBepInEx(MetadataLoadContext mlc, string bep_path)
         internal static AssemblyDefinition? GetBepInEx()
         {
-            string core_path = Path.Combine(bep_path, "core");
+            if (Program.BEP_PATH == null)
+                return null;
+
+            string core_path = Path.Combine(Program.BEP_PATH, "core");
             string path;
 
             if (File.Exists(Path.Combine(core_path, "BepInEx.Unity.Mono.dll")))
@@ -17,55 +21,24 @@ namespace AtomicFramework
             else
                 return null;
 
-            return mlc.LoadFromAssemblyPath(path);
+            return AssemblyDefinition.ReadAssembly(path);
         }
 
         internal static Plugin[]? GetPlugins()
         {
-            // TODO: Get Steam path from HKCU/Software/Valve/Steam/SteamPath and read steamapps/appmanifest_2168680.acf to find game folder
-            // TODO: On linux, use ~/.steam/steam/ for steam path instead of HKCU
-            string? bep_path = Environment.GetEnvironmentVariable("BEP_PATH");
-            if (bep_path != null && !Path.IsPathFullyQualified(bep_path))
-                bep_path = null;
-
-            string? managed_path = Environment.GetEnvironmentVariable("MANAGE_PATH");
-            if (managed_path != null && !Path.IsPathFullyQualified(managed_path))
-                managed_path = null;
-
-            if (bep_path == null || managed_path == null)
-            {
-                if (bep_path != null)
-                    managed_path = Path.GetFullPath("../NuclearOption_Data/Managed", bep_path);
-                else if (managed_path != null)
-                    bep_path = Path.GetFullPath("../../BepInEx", managed_path);
-                else
-                {
-                    managed_path = Environment.GetEnvironmentVariable("NUCLEAR_OPTION_REFERENCES");
-
-                    // If we don't set bep_path, we won't continue processing, so we don't need to reclear managed_path
-                    if (managed_path != null && Path.IsPathFullyQualified(managed_path))
-                        bep_path = Path.GetFullPath("../../BepInEx", managed_path);
-                }
-            }
-
-            if (bep_path == null)
+            if (Program.BEP_PATH == null)
                 return null;
 
-            PluginResolver resolver = new(bep_path, managed_path!);
-            MetadataLoadContext mlc = new(resolver);
+            IEnumerable<AssemblyDefinition> plugins = Directory.EnumerateFiles(Path.Combine(Program.BEP_PATH, "plugins"), "*.dll", SearchOption.AllDirectories)
+                .Where(Plugin.IsPlugin)
+                .Select(Plugin.Load)
+                .OfType<AssemblyDefinition>();
 
-            IEnumerable<Assembly> potentials = Directory.EnumerateFiles(Path.Combine(bep_path, "plugins"), "*.dll", SearchOption.AllDirectories)
-                .Select(p =>
-                {
-                    try { return mlc.LoadFromAssemblyPath(p); } catch { return null; }
-                })
-                .OfType<Assembly>();
+            AssemblyDefinition? bepInEx = GetBepInEx();
+            if (bepInEx ==  null)
+                return null;
 
-            IEnumerable<Assembly> plugins = potentials.Where(a => a.GetReferencedAssemblies().Any(n => n.Name?.Contains("BepInEx") ?? false));
-
-            Assembly bepInEx = GetBepInEx(mlc, bep_path);
-
-            Version bepVersion = bepInEx.GetName().Version ?? (bepInEx.GetName().Name == "BepInEx.Unity.Mono" ? new(6, 0) : new(5, 0));
+            Version bepVersion = bepInEx.Name.Version ?? (bepInEx.Name.Name == "BepInEx.Unity.Mono" ? new(6, 0) : new(5, 0));
             Plugin[] output = [new(bepVersion, "BepInEx", "BepInEx", bepVersion), .. plugins.Select(p => {
                 try {
                     return new Plugin(p);
